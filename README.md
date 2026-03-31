@@ -2,7 +2,7 @@
 
 A fast, fluid web app for GTD daily reviews on top of Todoist. Process your inbox and review next actions - one task at a time, with quick actions and keyboard shortcuts.
 
-Built to replace slow Telegram bot workflows. Complete a full daily review in ~2 minutes.
+Complete a full daily review in ~2 minutes.
 
 ## Features
 
