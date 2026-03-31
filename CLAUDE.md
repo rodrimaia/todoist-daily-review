@@ -1,111 +1,66 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# CLAUDE.md
 
-Default to using Bun instead of Node.js.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+## Commands
 
-## APIs
-
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
-
-## Testing
-
-Use `bun test` to run tests.
-
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+```bash
+bun install          # install dependencies
+bun run dev          # dev server on localhost:3000
+bun run build        # production build to dist/
+bun run server.ts    # production server on localhost:3000
+bun test             # run tests (bun:test, not vitest)
 ```
 
-## Frontend
+Use Bun for everything. No node, npm, vite CLI, or dotenv.
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+## Architecture
 
-Server:
+GTD daily review web app on top of Todoist. Pure client-side SPA - all API calls go directly from browser to Todoist API. No backend database; token and preferences live in localStorage.
 
-```ts#index.ts
-import index from "./index.html"
+### Review flow state machine (`src/lib/review-machine.ts`)
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
+The core of the app. A `useReducer`-based state machine with three phases:
+
+```
+inbox -> filter -> summary
 ```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+- **inbox**: process inbox tasks one at a time (move to project, schedule, complete, delete, someday)
+- **filter**: review tasks matching the user's filter query (reschedule, complete, remove date)
+- **summary**: stats breakdown of actions taken
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
+Tasks processed in inbox (non-skipped) are tracked in `processedInboxTaskIds` and filtered out of the filter phase to prevent duplicates.
 
-With the following `frontend.tsx`:
+The reducer advances `currentIndex` through the task list. When it reaches the end, it auto-transitions to the next phase.
 
-```tsx#frontend.tsx
-import React from "react";
+### Data flow
 
-// import .css files directly and it works
-import './index.css';
+- `src/lib/storage.ts` - localStorage for API token and preferences
+- `src/lib/todoist.ts` - singleton TodoistApi instance, recreated on token change
+- `src/lib/mutations.ts` - TanStack Query mutation hooks (move, schedule, complete, delete, create project)
+- `src/lib/query-keys.ts` - query key factory for TanStack Query
 
-import { createRoot } from "react-dom/client";
+All data is prefetched at review start. Mutations are fire-and-forget (optimistic UI - state machine advances immediately, API call runs in background).
 
-const root = createRoot(document.body);
+### Routes
 
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
+Three routes, file-based via TanStack Router. All have `ssr: false` because they use localStorage.
 
-root.render(<Frontend />);
-```
+- `/` - token entry or dashboard with task counts
+- `/review` - the review flow (all phases are internal state, not separate routes)
+- `/settings` - API token, filter query, someday project
 
-Then, run index.ts
+### UI
 
-```sh
-bun --hot ./index.ts
-```
+shadcn/ui components in `src/components/ui/`. App components use these. Tailwind CSS v4 with zinc palette, oklch colors.
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+### Production server (`server.ts`)
+
+Bun.serve with preloaded static assets from `dist/client/`. Hashed assets get immutable cache headers. Falls back to TanStack Start SSR handler for routes.
+
+## Gotchas
+
+- `src/routeTree.gen.ts` is auto-generated by TanStack Router - never edit it, it's gitignored
+- The Todoist SDK bundles undici which causes Node.js module warnings during build - these are harmless
+- Date scheduling uses Todoist natural language strings directly ("today", "tomorrow", "saturday", "next monday") - not Date objects
