@@ -5,11 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-bun install          # install dependencies
-bun run dev          # dev server on localhost:3000
-bun run build        # production build to dist/
-bun run server.ts    # production server on localhost:3000
-bun test             # run tests (bun:test, not vitest)
+bun install                       # install dependencies
+bun run dev                       # dev server on localhost:3000
+bun run build                     # production build to .output/
+bun .output/server/index.mjs      # production server on localhost:3000
+bun test                          # run tests (bun:test, not vitest)
 ```
 
 Use Bun for everything. No node, npm, vite CLI, or dotenv.
@@ -55,9 +55,9 @@ Three routes, file-based via TanStack Router. All have `ssr: false` because they
 
 shadcn/ui components in `src/components/ui/`. App components use these. Tailwind CSS v4 with zinc palette, oklch colors.
 
-### Production server (`server.ts`)
+### Production
 
-Bun.serve with preloaded static assets from `dist/client/`. Hashed assets get immutable cache headers. Falls back to TanStack Start SSR handler for routes.
+Nitro (via `nitro/vite` plugin) builds a self-contained server to `.output/server/index.mjs`. No custom server file needed.
 
 ## Gotchas
 
