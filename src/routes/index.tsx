@@ -11,6 +11,7 @@ import { Inbox, ListChecks, Settings } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
+  ssr: false,
   component: Home,
 })
 

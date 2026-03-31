@@ -26,6 +26,7 @@ import { ReviewSummary } from '~/components/ReviewSummary'
 import { Loader2 } from 'lucide-react'
 
 export const Route = createFileRoute('/review')({
+  ssr: false,
   component: ReviewPage,
 })
 

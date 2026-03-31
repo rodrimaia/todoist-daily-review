@@ -36,7 +36,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # TanStack Router generated
 src/routeTree.gen.ts
 
-# Nitro
+# TanStack Start / Nitro
 .output
 .vinxi
 .nitro
+.tanstack

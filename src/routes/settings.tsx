@@ -18,6 +18,7 @@ import type { PersonalProject, WorkspaceProject } from '@doist/todoist-api-types
 import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/settings')({
+  ssr: false,
   component: SettingsPage,
 })
 

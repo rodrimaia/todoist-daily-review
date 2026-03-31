@@ -30,14 +30,14 @@ Open http://localhost:3000 and enter your [Todoist API token](https://todoist.co
 
 ```bash
 docker build -t todoist-daily-review .
-docker run -p 4173:4173 todoist-daily-review
+docker run -p 3000:3000 todoist-daily-review
 ```
 
 Or pull from GHCR:
 
 ```bash
 docker pull ghcr.io/rodrimaia/todoist-daily-review:latest
-docker run -p 4173:4173 ghcr.io/rodrimaia/todoist-daily-review:latest
+docker run -p 3000:3000 ghcr.io/rodrimaia/todoist-daily-review:latest
 ```
 
 ## Tech Stack

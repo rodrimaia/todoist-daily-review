@@ -11,9 +11,11 @@ COPY . .
 RUN bun run build
 
 FROM base AS runtime
+WORKDIR /app
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/server.ts ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 
-EXPOSE 4173
-CMD ["bunx", "vite", "preview", "--host", "0.0.0.0"]
+EXPOSE 3000
+CMD ["bun", "run", "server.ts"]
