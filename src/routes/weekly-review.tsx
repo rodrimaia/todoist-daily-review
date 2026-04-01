@@ -99,45 +99,49 @@ function WeeklyReviewPage() {
     return true
   })
 
-  const { data: projectTasksData, isLoading: projectTasksLoading } = useQuery({
-    queryKey: ['weekly-review', 'all-project-tasks'],
+  // Single query to fetch all tasks, paginated
+  const { data: allTasksData, isLoading: allTasksLoading } = useQuery({
+    queryKey: queryKeys.allTasks,
     queryFn: async () => {
       const api = getTodoistApi()
-      const results: { projectId: string; tasks: Task[] }[] = []
-      for (const project of reviewableProjects) {
-        const data = await api.getTasksByFilter({ query: `#${project.name}` })
-        results.push({ projectId: project.id, tasks: data.results ?? [] })
+      const all: Task[] = []
+      let cursor: string | undefined
+      while (true) {
+        const data = await api.getTasks(cursor ? { cursor } : undefined)
+        all.push(...(data.results ?? []))
+        if (!data.nextCursor) break
+        cursor = data.nextCursor
       }
-      return results
+      return all
     },
-    enabled: !projectsLoading && reviewableProjects.length > 0,
   })
 
-  const somedayQuery = useQuery({
-    queryKey: queryKeys.somedayTasks(somedayProjectId ?? ''),
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getTasksByFilter({ query: `#${projectMap.get(somedayProjectId!)?.name}` })
-    },
-    enabled: !!somedayProjectId && !!projectMap.get(somedayProjectId),
-  })
-
-  const isLoading =
-    projectsLoading || inboxLoading || upcomingLoading || projectTasksLoading || somedayQuery.isLoading
+  const isLoading = projectsLoading || inboxLoading || upcomingLoading || allTasksLoading
 
   useEffect(() => {
-    if (!isLoading && !started && inboxData && projectTasksData) {
+    if (!isLoading && !started && inboxData && allTasksData) {
       const inboxTasks = inboxData.results ?? []
       const upcomingTasks = upcomingData?.results ?? []
-      const somedayTasks = somedayQuery.data?.results ?? []
 
-      const projectsWithTasks: ProjectWithTasks[] = reviewableProjects
-        .map((project) => {
-          const found = projectTasksData.find((pt) => pt.projectId === project.id)
-          const tasks = found?.tasks ?? []
-          const hasNextAction = tasks.some((t) => t.labels.includes('next_action'))
-          return { project, tasks, hasNextAction }
-        })
+      // Group all tasks by projectId
+      const tasksByProject = new Map<string, Task[]>()
+      for (const task of allTasksData) {
+        const list = tasksByProject.get(task.projectId) ?? []
+        list.push(task)
+        tasksByProject.set(task.projectId, list)
+      }
+
+      // Build project review list from reviewable projects
+      const projectsWithTasks: ProjectWithTasks[] = reviewableProjects.map((project) => {
+        const tasks = tasksByProject.get(project.id) ?? []
+        const hasNextAction = tasks.some((t) => t.labels.includes('next_action'))
+        return { project, tasks, hasNextAction }
+      })
+
+      // Someday tasks from the someday project
+      const somedayTasks = somedayProjectId
+        ? tasksByProject.get(somedayProjectId) ?? []
+        : []
 
       dispatch({
         type: 'START',
@@ -148,7 +152,7 @@ function WeeklyReviewPage() {
       })
       setStarted(true)
     }
-  }, [isLoading, started, inboxData, projectTasksData, upcomingData, somedayQuery.data])
+  }, [isLoading, started, inboxData, allTasksData, upcomingData])
 
   const moveTask = useMoveTask()
   const scheduleTask = useScheduleTask()
