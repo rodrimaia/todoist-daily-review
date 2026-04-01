@@ -28,6 +28,7 @@ function SettingsPage() {
   const [token, setTokenState] = useState(() => getToken() ?? '')
   const [filter, setFilter] = useState(() => getPreferences().filterQuery)
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')
+  const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
   const [saved, setSaved] = useState(false)
 
   const hasToken = !!getToken()
@@ -51,6 +52,7 @@ function SettingsPage() {
     setPreferences({
       filterQuery: filter,
       somedayProjectId: somedayId || null,
+      excludeProjectPrefixes: excludePrefixes,
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -127,6 +129,20 @@ function SettingsPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Exclude projects (weekly review)</label>
+              <Input
+                value={excludePrefixes}
+                onChange={(e) => setExcludePrefixes(e.target.value)}
+                placeholder="AREA, LISTA"
+              />
+              <p className="text-xs text-muted-foreground">
+                Comma-separated prefixes. Projects starting with these are skipped during weekly review.
+              </p>
             </div>
 
             <Button onClick={handleSave} className="w-full">

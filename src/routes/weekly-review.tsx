@@ -84,10 +84,20 @@ function WeeklyReviewPage() {
   const inboxProjectId = inboxProject?.id
   const somedayProjectId = prefs.somedayProjectId
 
-  // Fetch tasks for each non-inbox, non-someday project
-  const reviewableProjects = projects.filter(
-    (p) => p.id !== inboxProjectId && p.id !== somedayProjectId,
-  )
+  // Parse exclude prefixes from settings
+  const excludePrefixes = prefs.excludeProjectPrefixes
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+
+  const reviewableProjects = projects.filter((p) => {
+    if (p.id === inboxProjectId || p.id === somedayProjectId) return false
+    if (excludePrefixes.length > 0) {
+      const name = p.name.toLowerCase()
+      if (excludePrefixes.some((prefix) => name.startsWith(prefix))) return false
+    }
+    return true
+  })
 
   const { data: projectTasksData, isLoading: projectTasksLoading } = useQuery({
     queryKey: ['weekly-review', 'all-project-tasks'],

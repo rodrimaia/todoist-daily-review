@@ -6,11 +6,13 @@ const STORAGE_KEYS = {
 export interface Preferences {
   filterQuery: string
   somedayProjectId: string | null
+  excludeProjectPrefixes: string
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
   filterQuery: '@next_action & (no date | overdue | today)',
   somedayProjectId: null,
+  excludeProjectPrefixes: '',
 }
 
 export function getToken(): string | null {
