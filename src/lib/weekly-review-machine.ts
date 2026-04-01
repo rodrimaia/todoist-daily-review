@@ -37,7 +37,6 @@ export interface WeeklyReviewState {
   projectStats: ProjectStats
   // Someday
   somedayTasks: Task[]
-  somedayIndex: number
   somedayStats: SomedayStats
   // Upcoming
   upcomingTasks: Task[]
@@ -55,7 +54,7 @@ export type WeeklyReviewAction =
     }
   | { type: 'INBOX_ACTION'; action: InboxActionType; dueString?: string }
   | { type: 'PROJECT_ACTION'; action: ProjectActionType }
-  | { type: 'SOMEDAY_ACTION'; action: SomedayActionType }
+  | { type: 'SOMEDAY_DONE'; stats: SomedayStats }
   | { type: 'UPCOMING_ACTION'; action: UpcomingActionType; dueString?: string }
   | { type: 'STOP' }
 
@@ -68,7 +67,6 @@ type InboxActionType =
   | 'skip'
 
 type ProjectActionType = 'ok' | 'added_task' | 'deleted_project' | 'skip'
-type SomedayActionType = 'activate' | 'keep' | 'delete'
 type UpcomingActionType = 'schedule' | 'complete' | 'remove_date' | 'skip'
 
 function emptyInboxStats(): InboxStats {
@@ -105,7 +103,6 @@ export const weeklyInitialState: WeeklyReviewState = {
   projectIndex: 0,
   projectStats: emptyProjectStats(),
   somedayTasks: [],
-  somedayIndex: 0,
   somedayStats: emptySomedayStats(),
   upcomingTasks: [],
   upcomingIndex: 0,
@@ -143,12 +140,6 @@ function advanceProject(state: WeeklyReviewState): WeeklyReviewState {
   const next = state.projectIndex + 1
   if (next >= state.projects.length) return nextPhase(state, 'projects')
   return { ...state, projectIndex: next }
-}
-
-function advanceSomeday(state: WeeklyReviewState): WeeklyReviewState {
-  const next = state.somedayIndex + 1
-  if (next >= state.somedayTasks.length) return nextPhase(state, 'someday')
-  return { ...state, somedayIndex: next }
 }
 
 function advanceUpcoming(state: WeeklyReviewState): WeeklyReviewState {
@@ -203,14 +194,8 @@ export function weeklyReviewReducer(
       return advanceProject({ ...state, projectStats: stats })
     }
 
-    case 'SOMEDAY_ACTION': {
-      const stats = { ...state.somedayStats }
-      switch (action.action) {
-        case 'activate': stats.activated++; break
-        case 'keep': stats.kept++; break
-        case 'delete': stats.deleted++; break
-      }
-      return advanceSomeday({ ...state, somedayStats: stats })
+    case 'SOMEDAY_DONE': {
+      return nextPhase({ ...state, somedayStats: action.stats }, 'someday')
     }
 
     case 'UPCOMING_ACTION': {
@@ -241,7 +226,6 @@ export function weeklyReviewReducer(
 export function getWeeklyCurrentTask(state: WeeklyReviewState): Task | null {
   switch (state.phase) {
     case 'inbox': return state.inboxTasks[state.inboxIndex] ?? null
-    case 'someday': return state.somedayTasks[state.somedayIndex] ?? null
     case 'upcoming': return state.upcomingTasks[state.upcomingIndex] ?? null
     default: return null
   }
@@ -256,7 +240,6 @@ export function getWeeklyPhaseTotal(state: WeeklyReviewState): number {
   switch (state.phase) {
     case 'inbox': return state.inboxTasks.length
     case 'projects': return state.projects.length
-    case 'someday': return state.somedayTasks.length
     case 'upcoming': return state.upcomingTasks.length
     default: return 0
   }
@@ -266,7 +249,6 @@ export function getWeeklyPhaseIndex(state: WeeklyReviewState): number {
   switch (state.phase) {
     case 'inbox': return state.inboxIndex
     case 'projects': return state.projectIndex
-    case 'someday': return state.somedayIndex
     case 'upcoming': return state.upcomingIndex
     default: return 0
   }

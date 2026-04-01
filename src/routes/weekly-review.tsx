@@ -27,7 +27,7 @@ import { InboxActionBar } from '~/components/InboxActionBar'
 import { FilterActionBar } from '~/components/FilterActionBar'
 import { ProjectReviewCard } from '~/components/weekly-review/ProjectReviewCard'
 import { ProjectActionBar } from '~/components/weekly-review/ProjectActionBar'
-import { SomedayActionBar } from '~/components/weekly-review/SomedayActionBar'
+import { SomedayReviewCard } from '~/components/weekly-review/SomedayReviewCard'
 import { WeeklyReviewProgress } from '~/components/weekly-review/WeeklyReviewProgress'
 import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSummary'
 import { Loader2 } from 'lucide-react'
@@ -246,23 +246,26 @@ function WeeklyReviewPage() {
   }, [])
 
   // Someday handlers
-  const handleSomedayActivate = useCallback(() => {
-    if (!currentTask) return
-    // For now, just move to inbox - user will process in next daily review
-    // or we could show project picker. Keeping it simple: remove from someday by moving to inbox
-    moveTask.mutate({ taskId: currentTask.id, projectId: inboxProjectId ?? '' })
-    dispatch({ type: 'SOMEDAY_ACTION', action: 'activate' })
-  }, [currentTask, moveTask, inboxProjectId])
+  const handleSomedayActivate = useCallback(
+    (taskId: string) => {
+      moveTask.mutate({ taskId, projectId: inboxProjectId ?? '' })
+    },
+    [moveTask, inboxProjectId],
+  )
 
-  const handleSomedayKeep = useCallback(() => {
-    dispatch({ type: 'SOMEDAY_ACTION', action: 'keep' })
-  }, [])
+  const handleSomedayDelete = useCallback(
+    (taskId: string) => {
+      deleteTask.mutate(taskId)
+    },
+    [deleteTask],
+  )
 
-  const handleSomedayDelete = useCallback(() => {
-    if (!currentTask) return
-    deleteTask.mutate(currentTask.id)
-    dispatch({ type: 'SOMEDAY_ACTION', action: 'delete' })
-  }, [currentTask, deleteTask])
+  const handleSomedayDone = useCallback(
+    (stats: import('~/lib/weekly-review-machine').SomedayStats) => {
+      dispatch({ type: 'SOMEDAY_DONE', stats })
+    },
+    [],
+  )
 
   // Upcoming handlers (same as filter in daily review)
   const handleUpcomingSchedule = useCallback(
@@ -329,13 +332,6 @@ function WeeklyReviewPage() {
             case 's': handleProjectSkip(); break
           }
           break
-        case 'someday':
-          switch (e.key) {
-            case 'a': handleSomedayActivate(); break
-            case 'k': handleSomedayKeep(); break
-            case 'd': handleSomedayDelete(); break
-          }
-          break
         case 'upcoming':
           switch (e.key) {
             case 'c': handleUpcomingComplete(); break
@@ -361,9 +357,6 @@ function WeeklyReviewPage() {
     handleProjectAddTask,
     handleProjectDelete,
     handleProjectSkip,
-    handleSomedayActivate,
-    handleSomedayKeep,
-    handleSomedayDelete,
     handleUpcomingComplete,
     handleUpcomingSkip,
     handleUpcomingSchedule,
@@ -412,6 +405,20 @@ function WeeklyReviewPage() {
     )
   }
 
+  if (state.phase === 'someday') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
+        <SomedayReviewCard
+          tasks={state.somedayTasks}
+          onActivate={handleSomedayActivate}
+          onDelete={handleSomedayDelete}
+          onDone={handleSomedayDone}
+          onStop={handleStop}
+        />
+      </div>
+    )
+  }
+
   if (!currentTask) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -427,7 +434,7 @@ function WeeklyReviewPage() {
       <TaskCard
         task={currentTask}
         projectMap={projectMap}
-        animationKey={`${state.phase}-${state.phase === 'inbox' ? state.inboxIndex : state.phase === 'someday' ? state.somedayIndex : state.upcomingIndex}`}
+        animationKey={`${state.phase}-${state.phase === 'inbox' ? state.inboxIndex : state.upcomingIndex}`}
       />
 
       {state.phase === 'inbox' && (
@@ -442,15 +449,6 @@ function WeeklyReviewPage() {
           onSkip={handleInboxSkip}
           onStop={handleStop}
           onCreateProject={handleCreateProject}
-        />
-      )}
-
-      {state.phase === 'someday' && (
-        <SomedayActionBar
-          onActivate={handleSomedayActivate}
-          onKeep={handleSomedayKeep}
-          onDelete={handleSomedayDelete}
-          onStop={handleStop}
         />
       )}
 
