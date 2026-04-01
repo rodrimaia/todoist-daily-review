@@ -2,7 +2,7 @@ import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-sdk
 import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
 import { Calendar, FolderOpen } from 'lucide-react'
-import { isAfter, isBefore, startOfDay, parseISO } from 'date-fns'
+import { isAfter, isBefore, startOfDay, parseISO, format, isEqual, addDays } from 'date-fns'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -17,7 +17,14 @@ function getDueDateColor(due: Task['due']): string {
 
 function formatDueDate(due: Task['due']): string | null {
   if (!due) return null
-  return due.string
+  const today = startOfDay(new Date())
+  const dueDate = startOfDay(parseISO(due.date))
+  if (isBefore(dueDate, today)) {
+    return format(dueDate, 'MMM d') + ' (overdue)'
+  }
+  if (isEqual(dueDate, today)) return 'Today'
+  if (isEqual(dueDate, addDays(today, 1))) return 'Tomorrow'
+  return format(dueDate, 'EEE, MMM d')
 }
 
 export function TaskCard({

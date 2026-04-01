@@ -11,7 +11,6 @@ import {
   getCurrentTask,
   type ReviewState,
 } from '~/lib/review-machine'
-import { fetchFilteredTasks } from '~/lib/task-filters'
 import {
   useMoveTask,
   useScheduleTask,
@@ -62,7 +61,10 @@ function ReviewPage() {
 
   const { data: filterData, isLoading: filterLoading } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
-    queryFn: () => fetchFilteredTasks(prefs.filterQuery),
+    queryFn: async () => {
+      const api = getTodoistApi()
+      return api.getTasksByFilter({ query: prefs.filterQuery })
+    },
   })
 
   const isLoading = projectsLoading || inboxLoading || filterLoading
@@ -73,7 +75,7 @@ function ReviewPage() {
   useEffect(() => {
     if (!isLoading && !started && inboxData && filterData !== undefined) {
       const inboxTasks = inboxData.results ?? []
-      const filterTasks = filterData ?? []
+      const filterTasks = filterData.results ?? []
       dispatch({ type: 'START', inboxTasks, filterTasks })
       setStarted(true)
     }

@@ -7,7 +7,6 @@ import { getToken } from '~/lib/storage'
 import { getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
 import { getPreferences } from '~/lib/storage'
-import { fetchFilteredTasks } from '~/lib/task-filters'
 import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
@@ -49,11 +48,14 @@ function Dashboard() {
 
   const { data: filterData, isLoading: filterLoading } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
-    queryFn: () => fetchFilteredTasks(prefs.filterQuery),
+    queryFn: async () => {
+      const api = getTodoistApi()
+      return api.getTasksByFilter({ query: prefs.filterQuery })
+    },
   })
 
   const inboxCount = inboxData?.results?.length ?? 0
-  const filterCount = filterData?.length ?? 0
+  const filterCount = filterData?.results?.length ?? 0
   const isLoading = inboxLoading || filterLoading
 
   return (
