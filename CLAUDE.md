@@ -16,11 +16,11 @@ Use Bun for everything. No node, npm, vite CLI, or dotenv.
 
 ## Architecture
 
-GTD daily review web app on top of Todoist. Pure client-side SPA - all API calls go directly from browser to Todoist API. No backend database; token and preferences live in localStorage.
+GTD review web app on top of Todoist. Supports both daily and weekly reviews. Pure client-side SPA - all API calls go directly from browser to Todoist API. No backend database; token and preferences live in localStorage.
 
-### Review flow state machine (`src/lib/review-machine.ts`)
+### Daily review state machine (`src/lib/review-machine.ts`)
 
-The core of the app. A `useReducer`-based state machine with three phases:
+A `useReducer`-based state machine with three phases:
 
 ```
 inbox -> filter -> summary
@@ -32,23 +32,40 @@ inbox -> filter -> summary
 
 Tasks processed in inbox (non-skipped) are tracked in `processedInboxTaskIds` and filtered out of the filter phase to prevent duplicates.
 
-The reducer advances `currentIndex` through the task list. When it reaches the end, it auto-transitions to the next phase.
+### Weekly review state machine (`src/lib/weekly-review-machine.ts`)
+
+A `useReducer`-based state machine with five phases:
+
+```
+inbox -> projects -> someday -> upcoming -> summary
+```
+
+- **inbox**: same as daily review - process inbox tasks
+- **projects**: review each active project - see tasks, check for `@next_action`, add tasks, delete empty projects
+- **someday**: review Someday/Maybe items - activate (move to inbox), keep, or delete
+- **upcoming**: review overdue + next 7 days tasks (like daily filter but broader scope)
+- **summary**: stats breakdown across all phases
+
+Empty phases are auto-skipped. Processed inbox task IDs are used to dedup upcoming tasks.
+
+Both reducers advance through task/project lists and auto-transition to the next phase when reaching the end.
 
 ### Data flow
 
 - `src/lib/storage.ts` - localStorage for API token and preferences
 - `src/lib/todoist.ts` - singleton TodoistApi instance, recreated on token change
-- `src/lib/mutations.ts` - TanStack Query mutation hooks (move, schedule, complete, delete, create project)
+- `src/lib/mutations.ts` - TanStack Query mutation hooks (move, schedule, complete, delete, create project, add task, delete project)
 - `src/lib/query-keys.ts` - query key factory for TanStack Query
 
 All data is prefetched at review start. Mutations are fire-and-forget (optimistic UI - state machine advances immediately, API call runs in background).
 
 ### Routes
 
-Three routes, file-based via TanStack Router. All have `ssr: false` because they use localStorage.
+Four routes, file-based via TanStack Router. All have `ssr: false` because they use localStorage.
 
-- `/` - token entry or dashboard with task counts
-- `/review` - the review flow (all phases are internal state, not separate routes)
+- `/` - token entry or dashboard with task counts, buttons for daily and weekly review
+- `/review` - daily review flow (inbox -> filter -> summary)
+- `/weekly-review` - weekly review flow (inbox -> projects -> someday -> upcoming -> summary)
 - `/settings` - API token, filter query, someday project
 
 ### UI

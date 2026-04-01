@@ -1,4 +1,4 @@
-import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-api-typescript'
+import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
 import { Calendar, FolderOpen } from 'lucide-react'

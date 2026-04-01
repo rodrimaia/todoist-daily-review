@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { PersonalProject, WorkspaceProject } from '@doist/todoist-api-typescript'
+import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import {
   Command,
   CommandEmpty,

@@ -67,3 +67,36 @@ export function useCreateProject() {
     },
   })
 }
+
+export function useAddTask() {
+  return useMutation({
+    mutationFn: async ({
+      content,
+      projectId,
+      labels,
+      dueString,
+    }: {
+      content: string
+      projectId?: string
+      labels?: string[]
+      dueString?: string
+    }) => {
+      const api = getTodoistApi()
+      return api.addTask({
+        content,
+        ...(projectId ? { projectId } : {}),
+        ...(labels ? { labels } : {}),
+        ...(dueString ? { dueString } : {}),
+      })
+    },
+  })
+}
+
+export function useDeleteProject() {
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const api = getTodoistApi()
+      await api.deleteProject(projectId)
+    },
+  })
+}

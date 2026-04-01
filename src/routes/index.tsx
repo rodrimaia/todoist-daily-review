@@ -7,7 +7,8 @@ import { getToken } from '~/lib/storage'
 import { getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
 import { getPreferences } from '~/lib/storage'
-import { Inbox, ListChecks, Settings } from 'lucide-react'
+import { fetchFilteredTasks } from '~/lib/task-filters'
+import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -48,33 +49,42 @@ function Dashboard() {
 
   const { data: filterData, isLoading: filterLoading } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getTasksByFilter({ query: prefs.filterQuery })
-    },
+    queryFn: () => fetchFilteredTasks(prefs.filterQuery),
   })
 
   const inboxCount = inboxData?.results?.length ?? 0
-  const filterCount = filterData?.results?.length ?? 0
+  const filterCount = filterData?.length ?? 0
   const isLoading = inboxLoading || filterLoading
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-8">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-medium">Daily Review</h1>
+        <h1 className="text-2xl font-medium">GTD Review</h1>
         <p className="text-muted-foreground text-sm">
           {isLoading ? 'Loading...' : `${inboxCount} inbox, ${filterCount} to review`}
         </p>
       </div>
 
-      <Button
-        size="lg"
-        onClick={() => navigate({ to: '/review' })}
-        disabled={isLoading || (inboxCount === 0 && filterCount === 0)}
-        className="text-base px-8 py-6"
-      >
-        Start Review
-      </Button>
+      <div className="flex gap-3">
+        <Button
+          size="lg"
+          onClick={() => navigate({ to: '/review' })}
+          disabled={isLoading || (inboxCount === 0 && filterCount === 0)}
+          className="text-base px-8 py-6"
+        >
+          Daily Review
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate({ to: '/weekly-review' })}
+          disabled={isLoading}
+          className="text-base px-8 py-6 gap-2"
+        >
+          <CalendarRange className="h-5 w-5" />
+          Weekly Review
+        </Button>
+      </div>
 
       <div className="flex gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1.5">

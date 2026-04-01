@@ -14,7 +14,7 @@ import {
 } from '~/lib/storage'
 import { resetTodoistApi, getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
-import type { PersonalProject, WorkspaceProject } from '@doist/todoist-api-typescript'
+import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/settings')({

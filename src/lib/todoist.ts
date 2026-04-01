@@ -1,4 +1,4 @@
-import { TodoistApi } from '@doist/todoist-api-typescript'
+import { TodoistApi } from '@doist/todoist-sdk'
 import { getToken } from './storage'
 
 let apiInstance: TodoistApi | null = null

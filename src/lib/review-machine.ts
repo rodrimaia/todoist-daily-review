@@ -1,4 +1,4 @@
-import type { Task } from '@doist/todoist-api-typescript'
+import type { Task } from '@doist/todoist-sdk'
 
 export type Phase = 'inbox' | 'filter' | 'summary'
 

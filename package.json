@@ -20,7 +20,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@doist/todoist-api-typescript": "^7.10.0",
+    "@doist/todoist-sdk": "8.0.0",
     "@tanstack/react-query": "^5.96.0",
     "@tanstack/react-router": "^1.168.10",
     "@tanstack/react-start": "^1.167.16",

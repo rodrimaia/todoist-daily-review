@@ -1,7 +1,7 @@
 import { useReducer, useEffect, useCallback, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-api-typescript'
+import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences, getToken } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
@@ -11,6 +11,7 @@ import {
   getCurrentTask,
   type ReviewState,
 } from '~/lib/review-machine'
+import { fetchFilteredTasks } from '~/lib/task-filters'
 import {
   useMoveTask,
   useScheduleTask,
@@ -61,10 +62,7 @@ function ReviewPage() {
 
   const { data: filterData, isLoading: filterLoading } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getTasksByFilter({ query: prefs.filterQuery })
-    },
+    queryFn: () => fetchFilteredTasks(prefs.filterQuery),
   })
 
   const isLoading = projectsLoading || inboxLoading || filterLoading
@@ -73,9 +71,9 @@ function ReviewPage() {
   const projectMap = new Map<string, Project>(projects.map((p) => [p.id, p]))
 
   useEffect(() => {
-    if (!isLoading && !started && inboxData && filterData) {
+    if (!isLoading && !started && inboxData && filterData !== undefined) {
       const inboxTasks = inboxData.results ?? []
-      const filterTasks = filterData.results ?? []
+      const filterTasks = filterData ?? []
       dispatch({ type: 'START', inboxTasks, filterTasks })
       setStarted(true)
     }
@@ -202,20 +200,16 @@ function ReviewPage() {
           // handled by InboxActionBar internally
           break
         case '1':
-          if (state.phase === 'inbox') handleInboxSchedule('today')
-          else handleFilterSchedule('today')
+          if (state.phase === 'filter') handleFilterSchedule('today')
           break
         case '2':
-          if (state.phase === 'inbox') handleInboxSchedule('tomorrow')
-          else handleFilterSchedule('tomorrow')
+          if (state.phase === 'filter') handleFilterSchedule('tomorrow')
           break
         case '3':
-          if (state.phase === 'inbox') handleInboxSchedule('saturday')
-          else handleFilterSchedule('saturday')
+          if (state.phase === 'filter') handleFilterSchedule('saturday')
           break
         case '4':
-          if (state.phase === 'inbox') handleInboxSchedule('next monday')
-          else handleFilterSchedule('next monday')
+          if (state.phase === 'filter') handleFilterSchedule('next monday')
           break
         case '0':
           if (state.phase === 'filter') handleFilterSchedule('no date')
@@ -285,7 +279,6 @@ function ReviewPage() {
           somedayProjectId={prefs.somedayProjectId}
           onMoveToProject={handleInboxMoveToProject}
           onMoveToSomeday={handleInboxMoveToSomeday}
-          onSchedule={handleInboxSchedule}
           onComplete={handleInboxComplete}
           onDelete={handleInboxDelete}
           onSkip={handleInboxSkip}
