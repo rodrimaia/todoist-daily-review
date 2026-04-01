@@ -79,7 +79,7 @@ function WeeklyReviewPage() {
 
   // Find the Inbox project to exclude from project review
   const inboxProject = projects.find(
-    (p) => 'isInboxProject' in p && (p as PersonalProject).isInboxProject,
+    (p) => 'inboxProject' in p && (p as any).inboxProject,
   )
   const inboxProjectId = inboxProject?.id
   const somedayProjectId = prefs.somedayProjectId
