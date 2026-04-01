@@ -24,7 +24,7 @@ import {
 } from '~/lib/mutations'
 import { TaskCard } from '~/components/TaskCard'
 import { InboxActionBar } from '~/components/InboxActionBar'
-import { FilterActionBar } from '~/components/FilterActionBar'
+import { UpcomingReviewCard } from '~/components/weekly-review/UpcomingReviewCard'
 import { ProjectReviewCard } from '~/components/weekly-review/ProjectReviewCard'
 import { ProjectActionBar } from '~/components/weekly-review/ProjectActionBar'
 import { SomedayReviewCard } from '~/components/weekly-review/SomedayReviewCard'
@@ -267,30 +267,34 @@ function WeeklyReviewPage() {
     [],
   )
 
-  // Upcoming handlers (same as filter in daily review)
-  const handleUpcomingSchedule = useCallback(
-    (dueString: string) => {
-      if (!currentTask) return
-      if (dueString === 'no date') {
-        scheduleTask.mutate({ taskId: currentTask.id, dueString: null })
-        dispatch({ type: 'UPCOMING_ACTION', action: 'remove_date' })
-      } else {
-        scheduleTask.mutate({ taskId: currentTask.id, dueString })
-        dispatch({ type: 'UPCOMING_ACTION', action: 'schedule', dueString })
-      }
+  // Upcoming handlers (batch/list view)
+  const handleUpcomingReschedule = useCallback(
+    (taskId: string, dueString: string) => {
+      scheduleTask.mutate({ taskId, dueString })
     },
-    [currentTask, scheduleTask],
+    [scheduleTask],
   )
 
-  const handleUpcomingComplete = useCallback(() => {
-    if (!currentTask) return
-    completeTask.mutate(currentTask.id)
-    dispatch({ type: 'UPCOMING_ACTION', action: 'complete' })
-  }, [currentTask, completeTask])
+  const handleUpcomingComplete = useCallback(
+    (taskId: string) => {
+      completeTask.mutate(taskId)
+    },
+    [completeTask],
+  )
 
-  const handleUpcomingSkip = useCallback(() => {
-    dispatch({ type: 'UPCOMING_ACTION', action: 'skip' })
-  }, [])
+  const handleUpcomingRemoveDate = useCallback(
+    (taskId: string) => {
+      scheduleTask.mutate({ taskId, dueString: null })
+    },
+    [scheduleTask],
+  )
+
+  const handleUpcomingDone = useCallback(
+    (stats: import('~/lib/weekly-review-machine').UpcomingStats) => {
+      dispatch({ type: 'UPCOMING_DONE', stats })
+    },
+    [],
+  )
 
   const handleStop = useCallback(() => {
     dispatch({ type: 'STOP' })
@@ -332,17 +336,7 @@ function WeeklyReviewPage() {
             case 's': handleProjectSkip(); break
           }
           break
-        case 'upcoming':
-          switch (e.key) {
-            case 'c': handleUpcomingComplete(); break
-            case 's': handleUpcomingSkip(); break
-            case '1': handleUpcomingSchedule('today'); break
-            case '2': handleUpcomingSchedule('tomorrow'); break
-            case '3': handleUpcomingSchedule('saturday'); break
-            case '4': handleUpcomingSchedule('next monday'); break
-            case '0': handleUpcomingSchedule('no date'); break
-          }
-          break
+        // upcoming phase uses inline actions in UpcomingReviewCard
       }
     }
 
@@ -357,9 +351,6 @@ function WeeklyReviewPage() {
     handleProjectAddTask,
     handleProjectDelete,
     handleProjectSkip,
-    handleUpcomingComplete,
-    handleUpcomingSkip,
-    handleUpcomingSchedule,
     handleStop,
   ])
 
@@ -419,6 +410,22 @@ function WeeklyReviewPage() {
     )
   }
 
+  if (state.phase === 'upcoming') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
+        <UpcomingReviewCard
+          tasks={state.upcomingTasks}
+          projectMap={projectMap}
+          onReschedule={handleUpcomingReschedule}
+          onComplete={handleUpcomingComplete}
+          onRemoveDate={handleUpcomingRemoveDate}
+          onDone={handleUpcomingDone}
+          onStop={handleStop}
+        />
+      </div>
+    )
+  }
+
   if (!currentTask) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -434,32 +441,22 @@ function WeeklyReviewPage() {
       <TaskCard
         task={currentTask}
         projectMap={projectMap}
-        animationKey={`${state.phase}-${state.phase === 'inbox' ? state.inboxIndex : state.upcomingIndex}`}
+        animationKey={`inbox-${state.inboxIndex}`}
       />
 
-      {state.phase === 'inbox' && (
-        <InboxActionBar
-          task={currentTask}
-          projects={projects}
-          somedayProjectId={prefs.somedayProjectId}
-          onMoveToProject={handleInboxMoveToProject}
-          onMoveToSomeday={handleInboxMoveToSomeday}
-          onComplete={handleInboxComplete}
-          onDelete={handleInboxDelete}
-          onSkip={handleInboxSkip}
-          onStop={handleStop}
-          onCreateProject={handleCreateProject}
-        />
-      )}
+      <InboxActionBar
+        task={currentTask}
+        projects={projects}
+        somedayProjectId={prefs.somedayProjectId}
+        onMoveToProject={handleInboxMoveToProject}
+        onMoveToSomeday={handleInboxMoveToSomeday}
+        onComplete={handleInboxComplete}
+        onDelete={handleInboxDelete}
+        onSkip={handleInboxSkip}
+        onStop={handleStop}
+        onCreateProject={handleCreateProject}
+      />
 
-      {state.phase === 'upcoming' && (
-        <FilterActionBar
-          onSchedule={handleUpcomingSchedule}
-          onComplete={handleUpcomingComplete}
-          onSkip={handleUpcomingSkip}
-          onStop={handleStop}
-        />
-      )}
     </div>
   )
 }

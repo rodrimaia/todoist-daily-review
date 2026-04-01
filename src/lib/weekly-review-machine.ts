@@ -1,5 +1,5 @@
 import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
-import type { InboxStats, FilterStats } from './review-machine'
+import type { InboxStats } from './review-machine'
 
 export type WeeklyPhase = 'inbox' | 'projects' | 'someday' | 'upcoming' | 'summary'
 
@@ -40,8 +40,7 @@ export interface WeeklyReviewState {
   somedayStats: SomedayStats
   // Upcoming
   upcomingTasks: Task[]
-  upcomingIndex: number
-  upcomingStats: FilterStats
+  upcomingStats: UpcomingStats
 }
 
 export type WeeklyReviewAction =
@@ -55,7 +54,7 @@ export type WeeklyReviewAction =
   | { type: 'INBOX_ACTION'; action: InboxActionType; dueString?: string }
   | { type: 'PROJECT_ACTION'; action: ProjectActionType }
   | { type: 'SOMEDAY_DONE'; stats: SomedayStats }
-  | { type: 'UPCOMING_ACTION'; action: UpcomingActionType; dueString?: string }
+  | { type: 'UPCOMING_DONE'; stats: UpcomingStats }
   | { type: 'STOP' }
 
 type InboxActionType =
@@ -67,22 +66,18 @@ type InboxActionType =
   | 'skip'
 
 type ProjectActionType = 'ok' | 'added_task' | 'deleted_project' | 'skip'
-type UpcomingActionType = 'schedule' | 'complete' | 'remove_date' | 'skip'
+export interface UpcomingStats {
+  rescheduled: number
+  completed: number
+  removedDate: number
+}
 
 function emptyInboxStats(): InboxStats {
   return { moved: 0, someday: 0, scheduled: 0, completed: 0, deleted: 0, skipped: 0 }
 }
 
-function emptyFilterStats(): FilterStats {
-  return {
-    rescheduledToday: 0,
-    rescheduledTomorrow: 0,
-    rescheduledSaturday: 0,
-    rescheduledNextMonday: 0,
-    removedDate: 0,
-    completed: 0,
-    skipped: 0,
-  }
+function emptyUpcomingStats(): UpcomingStats {
+  return { rescheduled: 0, completed: 0, removedDate: 0 }
 }
 
 function emptyProjectStats(): ProjectStats {
@@ -105,8 +100,7 @@ export const weeklyInitialState: WeeklyReviewState = {
   somedayTasks: [],
   somedayStats: emptySomedayStats(),
   upcomingTasks: [],
-  upcomingIndex: 0,
-  upcomingStats: emptyFilterStats(),
+  upcomingStats: emptyUpcomingStats(),
 }
 
 const PHASE_ORDER: WeeklyPhase[] = ['inbox', 'projects', 'someday', 'upcoming', 'summary']
@@ -119,9 +113,9 @@ function nextPhase(state: WeeklyReviewState, currentPhase: WeeklyPhase): WeeklyR
     if (phase === 'projects' && state.projects.length > 0)
       return { ...state, phase: 'projects', projectIndex: 0 }
     if (phase === 'someday' && state.somedayTasks.length > 0)
-      return { ...state, phase: 'someday', somedayIndex: 0 }
+      return { ...state, phase: 'someday' }
     if (phase === 'upcoming' && state.upcomingTasks.length > 0)
-      return { ...state, phase: 'upcoming', upcomingIndex: 0 }
+      return { ...state, phase: 'upcoming' }
   }
   return { ...state, phase: 'summary' }
 }
@@ -140,12 +134,6 @@ function advanceProject(state: WeeklyReviewState): WeeklyReviewState {
   const next = state.projectIndex + 1
   if (next >= state.projects.length) return nextPhase(state, 'projects')
   return { ...state, projectIndex: next }
-}
-
-function advanceUpcoming(state: WeeklyReviewState): WeeklyReviewState {
-  const next = state.upcomingIndex + 1
-  if (next >= state.upcomingTasks.length) return nextPhase(state, 'upcoming')
-  return { ...state, upcomingIndex: next }
 }
 
 export function weeklyReviewReducer(
@@ -198,21 +186,8 @@ export function weeklyReviewReducer(
       return nextPhase({ ...state, somedayStats: action.stats }, 'someday')
     }
 
-    case 'UPCOMING_ACTION': {
-      const stats = { ...state.upcomingStats }
-      switch (action.action) {
-        case 'schedule': {
-          if (action.dueString === 'today') stats.rescheduledToday++
-          else if (action.dueString === 'tomorrow') stats.rescheduledTomorrow++
-          else if (action.dueString === 'saturday') stats.rescheduledSaturday++
-          else if (action.dueString === 'next monday') stats.rescheduledNextMonday++
-          break
-        }
-        case 'remove_date': stats.removedDate++; break
-        case 'complete': stats.completed++; break
-        case 'skip': stats.skipped++; break
-      }
-      return advanceUpcoming({ ...state, upcomingStats: stats })
+    case 'UPCOMING_DONE': {
+      return nextPhase({ ...state, upcomingStats: action.stats }, 'upcoming')
     }
 
     case 'STOP':
@@ -224,11 +199,8 @@ export function weeklyReviewReducer(
 }
 
 export function getWeeklyCurrentTask(state: WeeklyReviewState): Task | null {
-  switch (state.phase) {
-    case 'inbox': return state.inboxTasks[state.inboxIndex] ?? null
-    case 'upcoming': return state.upcomingTasks[state.upcomingIndex] ?? null
-    default: return null
-  }
+  if (state.phase === 'inbox') return state.inboxTasks[state.inboxIndex] ?? null
+  return null
 }
 
 export function getWeeklyCurrentProject(state: WeeklyReviewState): ProjectWithTasks | null {
@@ -240,7 +212,6 @@ export function getWeeklyPhaseTotal(state: WeeklyReviewState): number {
   switch (state.phase) {
     case 'inbox': return state.inboxTasks.length
     case 'projects': return state.projects.length
-    case 'upcoming': return state.upcomingTasks.length
     default: return 0
   }
 }
@@ -249,9 +220,12 @@ export function getWeeklyPhaseIndex(state: WeeklyReviewState): number {
   switch (state.phase) {
     case 'inbox': return state.inboxIndex
     case 'projects': return state.projectIndex
-    case 'upcoming': return state.upcomingIndex
     default: return 0
   }
+}
+
+export function getUpcomingStatsTotal(stats: UpcomingStats): number {
+  return stats.rescheduled + stats.completed + stats.removedDate
 }
 
 export function getProjectStatsTotal(stats: ProjectStats): number {

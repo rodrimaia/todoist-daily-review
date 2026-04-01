@@ -8,17 +8,16 @@ import {
   Trash2,
   SkipForward,
   CalendarDays,
-  ArrowRight,
   CalendarRange,
   CalendarOff,
   Plus,
   Play,
   Eye,
 } from 'lucide-react'
-import type { InboxStats, FilterStats } from '~/lib/review-machine'
-import { getInboxTotal, getFilterTotal } from '~/lib/review-machine'
-import type { ProjectStats, SomedayStats } from '~/lib/weekly-review-machine'
-import { getProjectStatsTotal, getSomedayStatsTotal } from '~/lib/weekly-review-machine'
+import type { InboxStats } from '~/lib/review-machine'
+import { getInboxTotal } from '~/lib/review-machine'
+import type { ProjectStats, SomedayStats, UpcomingStats } from '~/lib/weekly-review-machine'
+import { getProjectStatsTotal, getSomedayStatsTotal, getUpcomingStatsTotal } from '~/lib/weekly-review-machine'
 
 function StatRow({
   icon: Icon,
@@ -51,13 +50,13 @@ export function WeeklyReviewSummary({
   inboxStats: InboxStats
   projectStats: ProjectStats
   somedayStats: SomedayStats
-  upcomingStats: FilterStats
+  upcomingStats: UpcomingStats
   onDone: () => void
 }) {
   const inboxTotal = getInboxTotal(inboxStats)
   const projectTotal = getProjectStatsTotal(projectStats)
   const somedayTotal = getSomedayStatsTotal(somedayStats)
-  const upcomingTotal = getFilterTotal(upcomingStats)
+  const upcomingTotal = getUpcomingStatsTotal(upcomingStats)
   const grandTotal = inboxTotal + projectTotal + somedayTotal + upcomingTotal
 
   return (
@@ -113,13 +112,9 @@ export function WeeklyReviewSummary({
           <div className="space-y-2">
             <p className="text-sm font-medium">Upcoming ({upcomingTotal})</p>
             <div className="space-y-1">
-              <StatRow icon={CalendarDays} label="Today" count={upcomingStats.rescheduledToday} />
-              <StatRow icon={ArrowRight} label="Tomorrow" count={upcomingStats.rescheduledTomorrow} />
-              <StatRow icon={CalendarRange} label="Saturday" count={upcomingStats.rescheduledSaturday} />
-              <StatRow icon={CalendarRange} label="Next Monday" count={upcomingStats.rescheduledNextMonday} />
-              <StatRow icon={CalendarOff} label="Removed date" count={upcomingStats.removedDate} />
+              <StatRow icon={CalendarRange} label="Rescheduled" count={upcomingStats.rescheduled} />
               <StatRow icon={Check} label="Completed" count={upcomingStats.completed} />
-              <StatRow icon={SkipForward} label="Skipped" count={upcomingStats.skipped} />
+              <StatRow icon={CalendarOff} label="Removed date" count={upcomingStats.removedDate} />
             </div>
           </div>
         )}
