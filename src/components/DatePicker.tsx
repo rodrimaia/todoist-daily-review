@@ -10,7 +10,7 @@ const DATE_OPTIONS = [
   { label: 'Today', value: 'today', icon: CalendarDays, shortcut: '1' },
   { label: 'Tomorrow', value: 'tomorrow', icon: ArrowRight, shortcut: '2' },
   { label: 'Saturday', value: 'saturday', icon: CalendarRange, shortcut: '3' },
-  { label: 'Next Monday', value: 'next monday', icon: CalendarRange, shortcut: '4' },
+  { label: 'Monday', value: 'monday', icon: CalendarRange, shortcut: '4' },
   { label: 'No date', value: 'no date', icon: CalendarOff, shortcut: '0' },
 ] as const
 

@@ -211,7 +211,7 @@ function ReviewPage() {
           if (state.phase === 'filter') handleFilterSchedule('saturday')
           break
         case '4':
-          if (state.phase === 'filter') handleFilterSchedule('next monday')
+          if (state.phase === 'filter') handleFilterSchedule('monday')
           break
         case '0':
           if (state.phase === 'filter') handleFilterSchedule('no date')

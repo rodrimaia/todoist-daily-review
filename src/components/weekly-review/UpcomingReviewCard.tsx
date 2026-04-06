@@ -92,7 +92,7 @@ function TaskRow({
             { label: 'Today', value: 'today' },
             { label: 'Tomorrow', value: 'tomorrow' },
             { label: 'Saturday', value: 'saturday' },
-            { label: 'Next Mon', value: 'next monday' },
+            { label: 'Monday', value: 'monday' },
           ].map((opt) => (
             <Button
               key={opt.value}

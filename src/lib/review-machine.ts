@@ -24,7 +24,7 @@ export interface FilterStats {
   rescheduledToday: number
   rescheduledTomorrow: number
   rescheduledSaturday: number
-  rescheduledNextMonday: number
+  rescheduledMonday: number
   removedDate: number
   completed: number
   skipped: number
@@ -55,7 +55,7 @@ function emptyFilterStats(): FilterStats {
     rescheduledToday: 0,
     rescheduledTomorrow: 0,
     rescheduledSaturday: 0,
-    rescheduledNextMonday: 0,
+    rescheduledMonday: 0,
     removedDate: 0,
     completed: 0,
     skipped: 0,
@@ -129,7 +129,7 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
           if (action.dueString === 'today') stats.rescheduledToday++
           else if (action.dueString === 'tomorrow') stats.rescheduledTomorrow++
           else if (action.dueString === 'saturday') stats.rescheduledSaturday++
-          else if (action.dueString === 'next monday') stats.rescheduledNextMonday++
+          else if (action.dueString === 'monday') stats.rescheduledMonday++
           break
         }
         case 'remove_date': stats.removedDate++; break
@@ -165,7 +165,7 @@ export function getFilterTotal(stats: FilterStats): number {
     stats.rescheduledToday +
     stats.rescheduledTomorrow +
     stats.rescheduledSaturday +
-    stats.rescheduledNextMonday +
+    stats.rescheduledMonday +
     stats.removedDate +
     stats.completed +
     stats.skipped

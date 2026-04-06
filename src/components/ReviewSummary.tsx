@@ -77,7 +77,7 @@ export function ReviewSummary({
               <StatRow icon={CalendarDays} label="Today" count={filterStats.rescheduledToday} />
               <StatRow icon={ArrowRight} label="Tomorrow" count={filterStats.rescheduledTomorrow} />
               <StatRow icon={CalendarRange} label="Saturday" count={filterStats.rescheduledSaturday} />
-              <StatRow icon={CalendarRange} label="Next Monday" count={filterStats.rescheduledNextMonday} />
+              <StatRow icon={CalendarRange} label="Monday" count={filterStats.rescheduledMonday} />
               <StatRow icon={CalendarOff} label="Removed date" count={filterStats.removedDate} />
               <StatRow icon={Check} label="Completed" count={filterStats.completed} />
               <StatRow icon={SkipForward} label="Skipped" count={filterStats.skipped} />
