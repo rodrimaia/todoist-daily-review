@@ -16,11 +16,13 @@ export function ProjectPicker({
   projects,
   onSelect,
   onCreateNew,
+  onNewProject,
   onCancel,
 }: {
   projects: Project[]
   onSelect: (project: Project) => void
   onCreateNew: (name: string) => void
+  onNewProject: () => void
   onCancel: () => void
 }) {
   const [search, setSearch] = useState('')
@@ -51,6 +53,15 @@ export function ProjectPicker({
           )}
         </CommandEmpty>
         <CommandGroup>
+          <CommandItem
+            value="__new_project__"
+            onSelect={onNewProject}
+            className="cursor-pointer text-primary"
+            forceMount
+          >
+            <FolderPlus className="h-4 w-4 mr-2" />
+            New Project...
+          </CommandItem>
           {projects.map((project) => (
             <CommandItem
               key={project.id}
