@@ -16,7 +16,7 @@ Use Bun for everything. No node, npm, vite CLI, or dotenv.
 
 ## Architecture
 
-GTD review web app on top of Todoist. Supports both daily and weekly reviews. Pure client-side SPA - all API calls go directly from browser to Todoist API. No backend database; token and preferences live in localStorage.
+GTD review web app on top of Todoist. Supports both daily and weekly reviews. API calls go directly from browser to Todoist API. No backend database; token and preferences live in localStorage. Authentication via Todoist OAuth (with manual token fallback).
 
 ### Daily review state machine (`src/lib/review-machine.ts`)
 
@@ -71,6 +71,18 @@ Four routes, file-based via TanStack Router. All have `ssr: false` because they 
 ### UI
 
 shadcn/ui components in `src/components/ui/`. App components use these. Tailwind CSS v4 with zinc palette, oklch colors.
+
+### OAuth authentication
+
+Todoist OAuth flow via server-side Nitro routes in `server/api/auth/`:
+
+- `login.get.ts` - generates CSRF state cookie and redirects to Todoist OAuth
+- `callback.get.ts` - exchanges auth code for token, redirects to `/?token=...`
+- `revoke.post.ts` - revokes token on logout
+
+Requires `.env` with `TODOIST_CLIENT_ID` and `TODOIST_CLIENT_SECRET` from https://developer.todoist.com/appconsole.html. Redirect URL: `http://localhost:3000/api/auth/callback`.
+
+Manual token entry remains as fallback in `ApiTokenForm`.
 
 ### Production
 

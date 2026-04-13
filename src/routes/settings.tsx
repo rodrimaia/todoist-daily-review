@@ -59,6 +59,14 @@ function SettingsPage() {
   }
 
   function handleClearToken() {
+    const currentToken = getToken()
+    if (currentToken) {
+      fetch('/api/auth/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: currentToken }),
+      }).catch(() => {})
+    }
     clearToken()
     resetTodoistApi()
     setTokenState('')

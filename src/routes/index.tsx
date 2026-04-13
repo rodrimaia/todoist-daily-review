@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { ApiTokenForm } from '~/components/ApiTokenForm'
-import { getToken } from '~/lib/storage'
+import { getToken, setToken } from '~/lib/storage'
 import { getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
 import { getPreferences } from '~/lib/storage'
@@ -18,6 +18,19 @@ export const Route = createFileRoute('/')({
 function Home() {
   const [hasToken, setHasToken] = useState(() => !!getToken())
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    if (token) {
+      setToken(token)
+      setHasToken(true)
+      window.history.replaceState({}, '', '/')
+    }
+    if (params.get('auth_error')) {
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
 
   const handleTokenSaved = useCallback(() => {
     setHasToken(true)
