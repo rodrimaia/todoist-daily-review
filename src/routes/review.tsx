@@ -202,19 +202,19 @@ function ReviewPage() {
           // handled by InboxActionBar internally
           break
         case '1':
-          if (state.phase === 'filter') handleFilterSchedule('today')
+          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('today')
           break
         case '2':
-          if (state.phase === 'filter') handleFilterSchedule('tomorrow')
+          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('tomorrow')
           break
         case '3':
-          if (state.phase === 'filter') handleFilterSchedule('saturday')
+          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('saturday')
           break
         case '4':
-          if (state.phase === 'filter') handleFilterSchedule('monday')
+          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('monday')
           break
         case '0':
-          if (state.phase === 'filter') handleFilterSchedule('no date')
+          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('no date')
           break
         case 'Escape':
           handleStop()
@@ -293,6 +293,7 @@ function ReviewPage() {
           onComplete={handleFilterComplete}
           onSkip={handleFilterSkip}
           onStop={handleStop}
+          isRecurring={currentTask?.due?.isRecurring}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
-import { Calendar, FolderOpen } from 'lucide-react'
+import { Calendar, FolderOpen, Repeat } from 'lucide-react'
 import { isAfter, isBefore, startOfDay, parseISO, format, isEqual, addDays } from 'date-fns'
 
 type Project = PersonalProject | WorkspaceProject
@@ -63,6 +63,12 @@ export function TaskCard({
             <Badge variant="outline" className={`gap-1 font-normal ${dueColor}`}>
               <Calendar className="h-3 w-3" />
               {dueLabel}
+            </Badge>
+          )}
+          {task.due?.isRecurring && (
+            <Badge variant="outline" className="gap-1 font-normal text-muted-foreground">
+              <Repeat className="h-3 w-3" />
+              {task.due.string}
             </Badge>
           )}
           {task.labels.length > 0 && (
