@@ -445,7 +445,6 @@ function WeeklyReviewPage() {
       />
 
       <InboxActionBar
-        task={currentTask}
         projects={projects}
         somedayProjectId={prefs.somedayProjectId}
         onMoveToProject={handleInboxMoveToProject}
