@@ -276,7 +276,6 @@ function ReviewPage() {
 
       {state.phase === 'inbox' ? (
         <InboxActionBar
-          task={currentTask}
           projects={projects}
           somedayProjectId={prefs.somedayProjectId}
           onMoveToProject={handleInboxMoveToProject}
