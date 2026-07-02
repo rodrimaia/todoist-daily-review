@@ -7,6 +7,6 @@ RUN bun run build
 
 FROM oven/bun:1-slim
 WORKDIR /app
-COPY --from=build /app/.output .output
+COPY --from=build /app/dist dist
 EXPOSE 3000
-CMD ["bun", ".output/server/index.mjs"]
+CMD ["bun", "dist/server/server.js"]

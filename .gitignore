@@ -37,6 +37,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Planning docs
 .planning
 
+# Agent configs
+.claude/
+CLAUDE.md
+
 # TanStack Router generated
 src/routeTree.gen.ts
 

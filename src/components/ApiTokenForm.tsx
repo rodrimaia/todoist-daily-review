@@ -20,31 +20,29 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
       <CardHeader>
         <CardTitle>Connect to Todoist</CardTitle>
         <CardDescription>
-          Sign in with your Todoist account to get started
+          Enter your Todoist API token to get started
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Button asChild className="w-full" size="lg">
-          <a href="/api/auth/login">Login with Todoist</a>
-        </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
-          </div>
-        </div>
-
+      <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <p className="text-xs text-muted-foreground">
+            Find your token at{' '}
+            <a
+              href="https://todoist.com/help/articles/find-your-api-token-Jpzx9IIlB"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              Todoist Settings &rarr; Integrations
+            </a>
+          </p>
           <Input
             type="password"
-            placeholder="Paste API token manually"
+            placeholder="Paste your API token"
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
-          <Button type="submit" variant="outline" disabled={!value.trim()}>
+          <Button type="submit" disabled={!value.trim()}>
             Save Token
           </Button>
         </form>
