@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { ApiTokenForm } from '~/components/ApiTokenForm'
@@ -10,12 +10,7 @@ import { getPreferences } from '~/lib/storage'
 import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/')({
-  ssr: false,
-  component: Home,
-})
-
-function Home() {
+export function Home() {
   const [hasToken, setHasToken] = useState(() => !!getToken())
   const navigate = useNavigate()
 

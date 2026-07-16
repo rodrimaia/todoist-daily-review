@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useCallback, useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
@@ -32,14 +32,9 @@ import { WeeklyReviewProgress } from '~/components/weekly-review/WeeklyReviewPro
 import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSummary'
 import { Loader2 } from 'lucide-react'
 
-export const Route = createFileRoute('/weekly-review')({
-  ssr: false,
-  component: WeeklyReviewPage,
-})
-
 type Project = PersonalProject | WorkspaceProject
 
-function WeeklyReviewPage() {
+export function WeeklyReviewPage() {
   const navigate = useNavigate()
   const prefs = getPreferences()
   const [state, dispatch] = useReducer(weeklyReviewReducer, weeklyInitialState)
