@@ -5,9 +5,9 @@ description: Discover, specify, approve, and publish any software feature, bug f
 
 # Propose a change
 
-Act as the Designer. Use the strongest reasoning available. Before approval, do not modify production code, create implementation issues, or publish Initiative artifacts. Never begin implementation or a Queue Run in this session.
+Act as the Designer. Use the strongest reasoning available. Before approval, do not modify production code, create implementation issues, or publish Initiative artifacts. Never begin implementation in this session.
 
-Require the original `openspec`, `git`, and authenticated `gh` CLIs. Require all three Workflow Pack skills to be installed together before publication because this skill reuses the queue's canonical issue reconciliation resources.
+Require the original `openspec`, `git`, and authenticated `gh` CLIs. Require both Workflow Pack skills and the generated `ralph/` files before publication.
 
 ## Load the contracts
 
@@ -17,8 +17,8 @@ Read these bundled references before authoring artifacts:
 - [delivery-slices.md](references/delivery-slices.md) before decomposing the Initiative;
 - [approval-view.md](references/approval-view.md) before requesting approval;
 - [agent-ready-issue-contract.md](references/agent-ready-issue-contract.md) to ensure every slice can later project a complete issue;
-- [reconciliation.md](../rodrigo-run-queue/references/reconciliation.md) before publishing issues;
-- [agent-ready-issue.md](../rodrigo-run-queue/assets/templates/agent-ready-issue.md) as the canonical issue-body template.
+- [issue-publication.md](references/issue-publication.md) before publishing issues;
+- [agent-ready-issue.md](assets/templates/agent-ready-issue.md) as the canonical issue-body template.
 
 Validate the manifest against `assets/workflow/initiatives/initiative.schema.json`; use `assets/workflow/initiatives/example.yaml` only as a structural example.
 
@@ -64,11 +64,13 @@ After approval, do not silently alter behavior, scope, acceptance criteria, cons
 
    Never force the update, bypass repository protections, or push before all local validation passes. If the push is rejected because the branch advanced or disallows the update, stop with exact command evidence and do not fall back to a pull request.
 6. Fetch the default branch again and confirm both `sourceCommit` and the manifest commit are ancestors of `origin/$default_branch`. Do not publish issues until this confirmation succeeds.
-7. Read the newly published Initiative and its exact active Spec Changes from `origin/$default_branch`. Using the shared reconciliation contract and issue template, reconcile exactly one Agent-Ready Issue per Delivery Slice, including the stable marker, `ready-for-agent` label, generated body, and every `blocked by` edge.
-8. Require one complete reconciliation pass with exact issue bodies and dependency links. If publication partially fails, rerun the same idempotent reconciliation without duplicating existing issues. If a complete pass still cannot succeed, stop with command evidence; the next Queue Run retains authority to repair the remaining projection.
+7. Read the newly published Initiative and its exact active Spec Changes from `origin/$default_branch`. Using the bundled publication contract and issue template, publish exactly one Agent-Ready Issue per Delivery Slice, including the stable marker, `ready-for-agent` label, generated body, and every `blocked by` edge.
+8. Require one complete publication pass with exact issue bodies and dependency links. If publication partially fails, rerun the same idempotent publication without duplicating existing issues. If a complete pass still cannot succeed, stop with command evidence; the Ralph runner has no authority to repair the projection.
 
 ## Stop
 
-After the Initiative commits and every Agent-Ready Issue are confirmed, report the default branch, published commit IDs, and issue numbers and URLs, then stop. Do not start implementation, create a Worker, or carry discovery context into execution. End with this instruction:
+After the Initiative commits and every Agent-Ready Issue are confirmed, report the default branch, published commit IDs, and issue numbers and URLs, then stop. Do not start implementation or carry discovery context into execution. End with this instruction:
 
-> Start a new session and invoke `rodrigo-run-queue`.
+> Run `./ralph/afk-ralph.sh`.
+
+Mention `./ralph/ralph-once.sh` only as an optional supervised or debugging path. Do not tell the user to open another agent session.

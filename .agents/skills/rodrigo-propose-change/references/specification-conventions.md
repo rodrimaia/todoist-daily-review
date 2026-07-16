@@ -15,5 +15,5 @@ Use an Engineering Spec for internal properties that must remain true: architect
 - Every software change updates at least one Product Spec or Engineering Spec through a standard Spec Change.
 - A Spec Change is the reviewable delta; an issue, plan, pull request, or Approval View cannot override it.
 - Keep supporting evidence and non-normative notes distinct from requirements.
-- If a proposed slice would leave the current specs or code inconsistent after merge, change the slice boundary before approval.
+- If a proposed slice would leave the current specs or code inconsistent after its delivery commit, change the slice boundary before approval.
 - If implementation later requires a normative change, classify it as Spec Drift and return for human approval.
