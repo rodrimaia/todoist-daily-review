@@ -123,7 +123,8 @@ ralph_run_agent() {
       --dangerously-bypass-approvals-and-sandbox - < "$RALPH_PROMPT"
   else
     prompt="$(cat "$RALPH_PROMPT")"
-    sbx run opencode "$RALPH_REPO_ROOT" -- run --auto "$prompt"
+    sbx run opencode "$RALPH_REPO_ROOT" -- run \
+      --dangerously-skip-permissions "$prompt"
   fi
 }
 
