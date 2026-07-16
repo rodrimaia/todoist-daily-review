@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "rodrigo-propose-change": {
+      "source": "rodrimaia/ai-workflow",
+      "sourceType": "github",
+      "skillPath": "skills/rodrigo-propose-change/SKILL.md",
+      "computedHash": "c096e5752ab98ef616373ebf5289fcd0d046ed7bee089e8768966d7cb5c1e20c"
+    },
+    "rodrigo-run-queue": {
+      "source": "rodrimaia/ai-workflow",
+      "sourceType": "github",
+      "skillPath": "skills/rodrigo-run-queue/SKILL.md",
+      "computedHash": "25a86cc911c443e5033625681a23e6bd71f35a516cc38692d3c75249c3b9a938"
+    },
+    "rodrigo-setup-workflow": {
+      "source": "rodrimaia/ai-workflow",
+      "sourceType": "github",
+      "skillPath": "skills/rodrigo-setup-workflow/SKILL.md",
+      "computedHash": "a06a0862741cbcf5139274e42da76a913c6f0b99644122fe047052484b2c09a8"
+    }
+  }
+}

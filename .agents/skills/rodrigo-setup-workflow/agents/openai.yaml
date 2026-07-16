@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rodrigo Setup Workflow"
+  short_description: "Initialize OpenSpec and repository routing"
+  default_prompt: "Use $rodrigo-setup-workflow to initialize or refresh this repository workflow."

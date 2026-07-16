@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rodrimaia/ai-workflow/initiative.schema.json",
+  "title": "AI Workflow Initiative Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "initiativeId", "sourceCommit", "slices"],
+  "properties": {
+    "version": { "const": 1 },
+    "initiativeId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40,64}$"
+    },
+    "slices": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "change", "blockedBy"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*-s[0-9]{2,}$"
+          },
+          "change": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "blockedBy": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]*-s[0-9]{2,}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}
