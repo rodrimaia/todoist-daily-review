@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -17,14 +17,9 @@ import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { ArrowLeft } from 'lucide-react'
 
-export const Route = createFileRoute('/settings')({
-  ssr: false,
-  component: SettingsPage,
-})
-
 type Project = PersonalProject | WorkspaceProject
 
-function SettingsPage() {
+export function SettingsPage() {
   const [token, setTokenState] = useState(() => getToken() ?? '')
   const [filter, setFilter] = useState(() => getPreferences().filterQuery)
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')

@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useCallback, useState } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
@@ -25,14 +25,9 @@ import { ReviewProgress } from '~/components/ReviewProgress'
 import { ReviewSummary } from '~/components/ReviewSummary'
 import { Loader2 } from 'lucide-react'
 
-export const Route = createFileRoute('/review')({
-  ssr: false,
-  component: ReviewPage,
-})
-
 type Project = PersonalProject | WorkspaceProject
 
-function ReviewPage() {
+export function ReviewPage() {
   const navigate = useNavigate()
   const prefs = getPreferences()
   const [state, dispatch] = useReducer(reviewReducer, initialState)

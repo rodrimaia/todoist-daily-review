@@ -41,9 +41,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .claude/
 CLAUDE.md
 
-# TanStack Router generated
-src/routeTree.gen.ts
-
 # TanStack Start / Nitro
 .output
 .vinxi
