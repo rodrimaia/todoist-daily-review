@@ -1,0 +1,11 @@
+version: 1
+initiativeId: example-notifications
+sourceCommit: 0123456789abcdef0123456789abcdef01234567
+slices:
+  - id: example-notifications-s01
+    change: add-notification-preferences
+    blockedBy: []
+  - id: example-notifications-s02
+    change: send-preference-aware-notifications
+    blockedBy:
+      - example-notifications-s01
