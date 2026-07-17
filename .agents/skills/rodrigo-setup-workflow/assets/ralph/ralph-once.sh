@@ -136,19 +136,14 @@ ralph_parse_outcome() {
       | wc -l \
       | tr -d ' '
   )"
-  terminal_line="$(printf '%s\n' "$output" | awk 'NF { line=$0 } END { print line }')"
   if [ "$recognized_count" != "1" ]; then
     echo "error: agent output must contain exactly one recognized Ralph sigil" >&2
     return 2
   fi
-  case "$terminal_line" in
-    '<promise>ISSUE_COMPLETE</promise>') RALPH_OUTCOME="ISSUE_COMPLETE" ;;
-    '<promise>ISSUE_BLOCKED</promise>') RALPH_OUTCOME="ISSUE_BLOCKED" ;;
-    '<promise>QUEUE_EMPTY</promise>') RALPH_OUTCOME="QUEUE_EMPTY" ;;
-    *)
-      echo "error: recognized Ralph sigil must be the final non-empty output line" >&2
-      return 2
-      ;;
+  case "$output" in
+    *'<promise>ISSUE_COMPLETE</promise>'*) RALPH_OUTCOME="ISSUE_COMPLETE" ;;
+    *'<promise>ISSUE_BLOCKED</promise>'*) RALPH_OUTCOME="ISSUE_BLOCKED" ;;
+    *'<promise>QUEUE_EMPTY</promise>'*) RALPH_OUTCOME="QUEUE_EMPTY" ;;
   esac
 }
 
