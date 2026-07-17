@@ -4,8 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todoist Daily Review</title>
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('todoist-review-preferences');
+          if (raw) {
+            var prefs = JSON.parse(raw);
+            var appearance = prefs.appearance;
+            if (appearance === 'dark' || (appearance !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme = 'dark';
+            }
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          }
+        } catch (_) {}
+      })();
+    </script>
   </head>
-  <body class="bg-zinc-50 text-zinc-900 antialiased min-h-screen">
+  <body class="min-h-screen antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

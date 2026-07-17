@@ -1,5 +1,6 @@
 import { Outlet } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useAppearance } from '~/lib/use-appearance'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -11,6 +12,8 @@ const queryClient = new QueryClient({
 })
 
 export function RootComponent() {
+  useAppearance()
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />

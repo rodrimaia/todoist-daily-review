@@ -10,8 +10,8 @@ function getDueDateColor(due: Task['due']): string {
   if (!due) return 'text-muted-foreground'
   const today = startOfDay(new Date())
   const dueDate = startOfDay(parseISO(due.date))
-  if (isBefore(dueDate, today)) return 'text-red-500'
-  if (!isAfter(dueDate, today)) return 'text-blue-500'
+  if (isBefore(dueDate, today)) return 'text-red-600 dark:text-red-400'
+  if (!isAfter(dueDate, today)) return 'text-blue-600 dark:text-blue-400'
   return 'text-muted-foreground'
 }
 

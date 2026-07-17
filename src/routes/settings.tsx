@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
@@ -11,7 +11,9 @@ import {
   clearToken,
   getPreferences,
   setPreferences,
+  type Appearance,
 } from '~/lib/storage'
+import { updateAppearance, useAppearance } from '~/lib/use-appearance'
 import { resetTodoistApi, getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
@@ -25,6 +27,7 @@ export function SettingsPage() {
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')
   const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
   const [saved, setSaved] = useState(false)
+  const currentAppearance = useAppearance()
 
   const hasToken = !!getToken()
 
@@ -58,6 +61,13 @@ export function SettingsPage() {
     resetTodoistApi()
     setTokenState('')
   }
+
+  const handleAppearanceChange = useCallback(
+    (appearance: Appearance) => {
+      updateAppearance(appearance)
+    },
+    [],
+  )
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 pt-8 gap-6">
@@ -137,6 +147,28 @@ export function SettingsPage() {
               />
               <p className="text-xs text-muted-foreground">
                 Comma-separated prefixes. Projects starting with these are skipped during weekly review.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Appearance</label>
+              <div className="flex gap-2">
+                {(['system', 'light', 'dark'] as Appearance[]).map((option) => (
+                  <Button
+                    key={option}
+                    variant={currentAppearance === option ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleAppearanceChange(option)}
+                    className="flex-1"
+                  >
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Changes apply immediately. System follows your device preference.
               </p>
             </div>
 
