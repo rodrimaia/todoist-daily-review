@@ -2,7 +2,6 @@
 
 ## Purpose
 Product behavior and engineering properties for choosing, resolving, persisting, and rendering the application's appearance theme.
-
 ## Requirements
 ### Requirement: Appearance preference selection
 The application SHALL offer System, Light, and Dark appearance preferences in Settings, SHALL use System when no valid preference has been saved, and SHALL apply a newly selected preference immediately without requiring the user to save unrelated settings or reload the application.
@@ -27,14 +26,14 @@ The application SHALL resolve Light to the light appearance, Dark to the dark ap
 - **THEN** the application continues to use the explicitly selected appearance
 
 ### Requirement: Complete themed appearance
-The resolved appearance SHALL apply consistently to every supported application route and visible application surface, including page backgrounds, text, cards, buttons, inputs, selection controls, dialogs, popovers, progress indicators, status colors, and compatible native browser controls, while preserving readable content and distinguishable interactive states.
+The resolved appearance SHALL apply consistently to every supported application route and visible application surface, including page backgrounds, text, cards, buttons, inputs, selection controls, dialogs, popovers, progress indicators, status colors, daily review completion celebration surfaces, and compatible native browser controls, while preserving readable content and distinguishable interactive states.
 
 #### Scenario: Dark appearance across supported routes
-- **WHEN** Dark is resolved and the user visits `/`, `/review`, `/weekly-review`, and `/settings`, including opening available overlays and controls
+- **WHEN** Dark is resolved and the user visits `/`, `/review`, `/weekly-review`, and `/settings`, including opening available overlays and controls and viewing the daily review completion celebration
 - **THEN** each visible surface uses the dark appearance without a light-only page or component surface and content and interactive states remain distinguishable
 
 #### Scenario: Light appearance remains available
-- **WHEN** Light is resolved and the user visits the supported routes
+- **WHEN** Light is resolved and the user visits the supported routes, including the daily review completion celebration
 - **THEN** the application retains a consistent light appearance and existing interaction behavior
 
 ### Requirement: Startup appearance consistency
@@ -47,3 +46,4 @@ The application SHALL resolve and expose the saved appearance before its first v
 #### Scenario: Direct system-mode load
 - **WHEN** a browser with System saved loads any supported URL directly
 - **THEN** the first visible application frame uses the appearance matching the operating-system preference at load time
+

@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CalendarRange,
   CalendarOff,
+  PartyPopper,
 } from 'lucide-react'
 import type { InboxStats, FilterStats } from '~/lib/review-machine'
 import { getInboxTotal, getFilterTotal } from '~/lib/review-machine'
@@ -47,6 +48,7 @@ export function ReviewSummary({
 }) {
   const inboxTotal = getInboxTotal(inboxStats)
   const filterTotal = getFilterTotal(filterStats)
+  const hasReviewedItems = inboxTotal > 0 || filterTotal > 0
 
   return (
     <Card className="w-full max-w-md animate-in fade-in duration-200">
@@ -82,6 +84,16 @@ export function ReviewSummary({
               <StatRow icon={Check} label="Completed" count={filterStats.completed} />
               <StatRow icon={SkipForward} label="Skipped" count={filterStats.skipped} />
             </div>
+          </div>
+        )}
+
+        {hasReviewedItems && (
+          <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-md bg-accent/50 animate-in zoom-in duration-300">
+            <PartyPopper className="h-5 w-5 text-chart-5" />
+            <span className="text-sm font-medium text-accent-foreground">
+              Daily review complete — great job!
+            </span>
+            <PartyPopper className="h-5 w-5 text-chart-5" />
           </div>
         )}
 
