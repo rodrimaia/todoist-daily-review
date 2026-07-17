@@ -1,6 +1,6 @@
 # Idempotent issue publication
 
-Read the approved Initiative Manifest and its exact active OpenSpec changes from `origin/$default_branch`, after the caller has resolved and fetched the repository's default branch. Render `assets/templates/agent-ready-issue.md` deterministically from those canonical files. Use this exact identity marker:
+Read the exact active OpenSpec changes from the remotely confirmed source commit. Render `assets/templates/agent-ready-issue.md` deterministically from those canonical files and the approved slice graph. Each issue must identify its Initiative, source commit, and exact OpenSpec change. Use this exact identity marker:
 
 `<!-- ai-workflow:slice-id: <stable-slice-id> -->`
 
@@ -13,6 +13,6 @@ For an existing projection:
 - do not copy manual body edits elsewhere; normative edits require Spec Drift;
 - ensure `ready-for-agent` and `blocked` exist with `gh label create <label> --force`, but introduce no triage, review, or active-work labels.
 
-After every slice has exactly one issue number, compare its native GitHub `blockedBy` issue numbers with the Initiative Manifest. Use `gh issue edit <number> --add-blocked-by <number>` for missing edges and `--remove-blocked-by <number>` for stale generated edges. Re-read each issue and require exact agreement between GitHub relationships and the generated `Blocked By` section.
+After every slice has exactly one issue number, compare its native GitHub `blockedBy` issue numbers with the approved slice graph. Use `gh issue edit <number> --add-blocked-by <number>` for missing edges and `--remove-blocked-by <number>` for stale generated edges. Require agreement between the native GitHub relationships and generated `Blocked By` section.
 
-Rerunning publication with unchanged canonical artifacts must create no issue and perform no edit. Complete one exact pass across every slice before the proposal workflow hands execution to Ralph. If a partial failure occurs, rerun the same idempotent publication. If any issue, body, label, or dependency edge remains missing or ambiguous, stop with command evidence; the Ralph runner has no authority to repair it.
+Rerunning publication with unchanged canonical artifacts must create no issue and perform no edit. Complete every slice before the proposal workflow hands execution to Ralph. Rerun the idempotent publication only after a partial failure. If any issue, body, label, or native GitHub dependency edge remains missing or ambiguous, stop with command evidence; the Ralph runner has no authority to repair it.

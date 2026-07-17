@@ -20,8 +20,6 @@ Read these bundled references before authoring artifacts:
 - [issue-publication.md](references/issue-publication.md) before publishing issues;
 - [agent-ready-issue.md](assets/templates/agent-ready-issue.md) as the canonical issue-body template.
 
-Validate the manifest against `assets/workflow/initiatives/initiative.schema.json`; use `assets/workflow/initiatives/example.yaml` only as a structural example.
-
 ## Discover
 
 1. Inspect `AGENTS.md`, `openspec/config.yaml`, `openspec/specs/`, relevant code and tests, `CONTEXT.md`, and applicable ADRs. Resolve repository facts directly instead of asking the user.
@@ -33,7 +31,7 @@ Validate the manifest against `assets/workflow/initiatives/initiative.schema.jso
 
 1. Use the installed OpenSpec proposal workflow and the original `openspec` CLI. Do not introduce a custom schema or artifact type.
 2. Create one standard OpenSpec change per Delivery Slice. Each change contains the standard proposal, specs, design, and tasks artifacts required by the repository's configured schema.
-3. Give every slice a stable ID in the form `<initiative-id>-sNN`; map it to exactly one unique OpenSpec change name. Record blockers only in the Initiative Manifest, outside OpenSpec's schema.
+3. Give every slice a stable ID in the form `<initiative-id>-sNN`; map it to exactly one unique OpenSpec change name. Keep blockers in the approved slice graph until publication creates native GitHub relationships.
 4. Update at least one ordinary Product Spec or Engineering Spec through every change. Keep issues and implementation recipes out of the Spec Corpus.
 5. Run `openspec validate <change-name>` for every slice and resolve all validation errors before approval.
 
@@ -53,23 +51,22 @@ After approval, do not silently alter behavior, scope, acceptance criteria, cons
    git fetch origin "$default_branch"
    ```
 
-2. Before committing approved artifacts, require the Initiative branch to contain `origin/$default_branch`. Synchronize without rewriting an approved artifact commit; stop on conflicts or any required normative change.
-3. Commit the approved, validated OpenSpec changes on the Initiative branch and record that exact artifact commit as `sourceCommit`.
-4. Create `workflow/initiatives/<initiative-id>.yaml` from the bundled schema. Include each stable slice ID, its exact OpenSpec change name, and its blocking slice IDs. Do not place this metadata under `openspec/`.
-5. Validate the manifest, commit it separately, and push the Initiative commits directly to the detected default branch:
+2. Before committing approved artifacts, require the Initiative branch to contain `origin/$default_branch`. Synchronize before committing; stop on conflicts or any required normative change.
+3. Create one source commit containing every approved, validated OpenSpec change and record its hash as `sourceCommit`.
+4. Push the source commit directly to the detected default branch:
 
    ```sh
    git push origin HEAD:"refs/heads/$default_branch"
    ```
 
    Never force the update, bypass repository protections, or push before all local validation passes. If the push is rejected because the branch advanced or disallows the update, stop with exact command evidence and do not fall back to a pull request.
-6. Fetch the default branch again and confirm both `sourceCommit` and the manifest commit are ancestors of `origin/$default_branch`. Do not publish issues until this confirmation succeeds.
-7. Read the newly published Initiative and its exact active Spec Changes from `origin/$default_branch`. Using the bundled publication contract and issue template, publish exactly one Agent-Ready Issue per Delivery Slice, including the stable marker, `ready-for-agent` label, generated body, and every `blocked by` edge.
-8. Require one complete publication pass with exact issue bodies and dependency links. If publication partially fails, rerun the same idempotent publication without duplicating existing issues. If a complete pass still cannot succeed, stop with command evidence; the Ralph runner has no authority to repair the projection.
+5. Confirm the remote default branch points to `sourceCommit`. Do not publish issues until this confirmation succeeds.
+6. Read the exact active Spec Changes from `sourceCommit`. Using the approved slice graph, bundled publication contract, and issue template, publish exactly one Agent-Ready Issue per Delivery Slice, including the stable marker, source commit, exact change name, `ready-for-agent` label, generated body, and every native `blocked by` edge.
+7. If publication partially fails, rerun the same idempotent publication without duplicating existing issues. If publication still cannot complete, stop with command evidence; the Ralph runner has no authority to repair the projection.
 
 ## Stop
 
-After the Initiative commits and every Agent-Ready Issue are confirmed, report the default branch, published commit IDs, and issue numbers and URLs, then stop. Do not start implementation or carry discovery context into execution. End with this instruction:
+After the source commit and every Agent-Ready Issue are confirmed, report the default branch, source commit ID, and issue numbers and URLs, then stop. Do not start implementation or carry discovery context into execution. End with this instruction:
 
 > Run `./ralph/afk-ralph.sh`.
 

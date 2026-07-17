@@ -35,7 +35,7 @@ If the Execution Frontier is empty, make no change and return only this terminal
 
 ## Load canonical authority
 
-For the selected issue, identify its stable Delivery Slice ID, source commit, Initiative Manifest entry, and exact active OpenSpec change. Confirm the issue is a complete Generated Projection of those remote default-branch artifacts. Read repository instructions, the exact Spec Change, relevant current specs, `CONTEXT.md`, applicable ADRs, and the output of:
+For the selected issue, identify its stable Delivery Slice ID, source commit, and exact active OpenSpec change. Confirm the issue is a complete Generated Projection of the source commit and relevant Spec Corpus. Read repository instructions, the exact Spec Change, relevant current specs, `CONTEXT.md`, applicable ADRs, and the output of:
 
 ```sh
 openspec status --change <change> --json

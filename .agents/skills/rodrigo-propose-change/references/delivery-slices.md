@@ -14,4 +14,4 @@ Accept a slice only when:
 
 Split a candidate when it cannot be committed safely, has separable outcomes, or would need multiple delivery commits. Combine candidates when either would leave the default branch incomplete or inconsistent on its own. Prefer the smallest vertical slices that preserve end-to-end meaning.
 
-Before approval, check the graph for unknown IDs, self-dependencies, cycles, hidden ordering, and acceptance criteria that span multiple slices. Record blocking edges only in the Initiative Manifest, not by extending the OpenSpec schema.
+Before approval, check the graph for unknown IDs, self-dependencies, cycles, hidden ordering, and acceptance criteria that span multiple slices. Publish blocking edges as native GitHub relationships after approval; do not extend the OpenSpec schema or create a separate metadata artifact.
