@@ -1,7 +1,7 @@
 ## 1. Recurrence-Based Skip
 
 - [x] 1.1 Make both Daily Review action surfaces present Skip only when the current Todoist task is explicitly recurring, defaulting missing recurrence data to non-recurring.
-- [ ] 1.2 Apply the same recurrence rule to the Daily Review `s` shortcut so non-recurring tasks remain active while recurring tasks retain existing Skip progression and accounting.
+- [x] 1.2 Apply the same recurrence rule to the Daily Review `s` shortcut so non-recurring tasks remain active while recurring tasks retain existing Skip progression and accounting.
 - [ ] 1.3 Confirm Stop and all non-Skip Daily Review actions remain available under their existing conditions and Weekly Review is unchanged.
 
 ## 2. Documentation

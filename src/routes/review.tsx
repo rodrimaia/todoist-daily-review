@@ -83,6 +83,7 @@ export function ReviewPage() {
   const createProject = useCreateProject()
 
   const currentTask = getCurrentTask(state)
+  const canSkip = currentTask?.due?.isRecurring === true
 
   const addNextActionLabel = useCallback(
     (task: Task): string[] => {
@@ -190,6 +191,7 @@ export function ReviewPage() {
           if (state.phase === 'inbox') handleInboxDelete()
           break
         case 's':
+          if (!canSkip) break
           if (state.phase === 'inbox') handleInboxSkip()
           else handleFilterSkip()
           break
@@ -221,6 +223,7 @@ export function ReviewPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     state.phase,
+    canSkip,
     handleInboxComplete,
     handleInboxDelete,
     handleInboxSkip,
@@ -280,7 +283,7 @@ export function ReviewPage() {
           onSkip={handleInboxSkip}
           onStop={handleStop}
           onCreateProject={handleCreateProject}
-          canSkip={currentTask.due?.isRecurring === true}
+          canSkip={canSkip}
         />
       ) : (
         <FilterActionBar
@@ -288,7 +291,7 @@ export function ReviewPage() {
           onComplete={handleFilterComplete}
           onSkip={handleFilterSkip}
           onStop={handleStop}
-          isRecurring={currentTask?.due?.isRecurring}
+          isRecurring={canSkip}
         />
       )}
     </div>
