@@ -13,7 +13,7 @@ Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing
 - **Inbox processing** -- move to project, schedule, complete, delete, or defer to someday
 - **Project review** -- check each project for next actions, add or delete projects
 - **Upcoming review** -- reschedule, complete, or remove dates from upcoming tasks
-- **Keyboard shortcuts** -- `1`-`4` quick dates, `c` complete, `d` delete, `s` skip, `m` move
+- **Keyboard shortcuts** -- `1`-`4` quick dates, `c` complete, `d` delete, `s` skip recurring Daily Review tasks, `m` move
 - **Progress tracking** -- see how far along you are in each review phase
 - **Summary stats** -- breakdown of all actions taken at the end of each review
 

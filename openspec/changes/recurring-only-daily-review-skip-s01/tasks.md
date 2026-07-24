@@ -6,7 +6,7 @@
 
 ## 2. Documentation
 
-- [ ] 2.1 Update the user-facing keyboard shortcut documentation to identify `s` as recurring-task-only during Daily Review.
+- [x] 2.1 Update the user-facing keyboard shortcut documentation to identify `s` as recurring-task-only during Daily Review.
 
 ## 3. Verification
 
