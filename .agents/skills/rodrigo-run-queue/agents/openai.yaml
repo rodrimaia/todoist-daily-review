@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rodrigo Run Queue"
-  short_description: "Reconcile and drain approved work"
-  default_prompt: "Use $rodrigo-run-queue to verify, repair, and drain all approved repository work."

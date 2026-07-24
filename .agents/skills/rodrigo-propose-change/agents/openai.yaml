@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rodrigo Propose Change"
-  short_description: "Plan and approve software changes"
-  default_prompt: "Use $rodrigo-propose-change to discover and propose this software change."

@@ -1,7 +1,0 @@
-version: 1
-initiativeId: static-spa-migration
-sourceCommit: 9bf95e35ec009814672f77a39da782296070737a
-slices:
-  - id: static-spa-migration-s01
-    change: migrate-to-static-spa
-    blockedBy: []

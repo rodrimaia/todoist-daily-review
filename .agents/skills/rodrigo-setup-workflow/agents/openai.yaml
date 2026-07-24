@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rodrigo Setup Workflow"
-  short_description: "Initialize workflow and Ralph runner"
-  default_prompt: "Use $rodrigo-setup-workflow to initialize and validate this repository workflow and its generated Ralph files."
