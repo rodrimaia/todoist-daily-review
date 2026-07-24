@@ -280,6 +280,7 @@ export function ReviewPage() {
           onSkip={handleInboxSkip}
           onStop={handleStop}
           onCreateProject={handleCreateProject}
+          canSkip={currentTask.due?.isRecurring === true}
         />
       ) : (
         <FilterActionBar

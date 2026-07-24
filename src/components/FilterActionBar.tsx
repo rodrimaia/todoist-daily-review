@@ -31,11 +31,13 @@ export function FilterActionBar({
           Done
           <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">c</kbd>
         </Button>
-        <Button variant="ghost" size="sm" onClick={onSkip} className="gap-1.5 text-muted-foreground">
-          <SkipForward className="h-3.5 w-3.5" />
-          Skip
-          <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">s</kbd>
-        </Button>
+        {isRecurring && (
+          <Button variant="ghost" size="sm" onClick={onSkip} className="gap-1.5 text-muted-foreground">
+            <SkipForward className="h-3.5 w-3.5" />
+            Skip
+            <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">s</kbd>
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onStop} className="gap-1.5 text-muted-foreground">
           <Square className="h-3.5 w-3.5" />
           Stop
