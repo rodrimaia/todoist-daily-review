@@ -4,6 +4,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - Run the local validation commands documented in `README.md` before committing product changes.
 - Preserve the review invariants and terminology documented in `CONTEXT.md`; shared decision eligibility lives in `src/lib/task-decisions.ts`.
+- Keep Todoist cache and account-identity policy centralized in `src/lib/todoist-cache.ts` and `src/lib/todoist-session.ts`; query keys must never contain token values.
 
 ## Maintaining this file
 

@@ -1,23 +1,23 @@
 import { useState, useCallback } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Separator } from '~/components/ui/separator'
 import {
   getToken,
-  setToken,
-  clearToken,
   getPreferences,
   setPreferences,
   type Appearance,
 } from '~/lib/storage'
 import { updateAppearance, useAppearance } from '~/lib/use-appearance'
-import { resetTodoistApi, getTodoistApi } from '~/lib/todoist'
+import { getTodoistApi } from '~/lib/todoist'
+import { replaceTodoistToken } from '~/lib/todoist-session'
 import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { ArrowLeft } from 'lucide-react'
+import { TodoistReadError } from '~/components/TodoistReadError'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -28,10 +28,16 @@ export function SettingsPage() {
   const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
   const [saved, setSaved] = useState(false)
   const currentAppearance = useAppearance()
+  const queryClient = useQueryClient()
 
   const hasToken = !!getToken()
 
-  const { data: projectsData } = useQuery({
+  const {
+    data: projectsData,
+    isError: projectsError,
+    isFetching: projectsFetching,
+    refetch: refetchProjects,
+  } = useQuery({
     queryKey: queryKeys.projects,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -42,10 +48,10 @@ export function SettingsPage() {
 
   const projects = (projectsData?.results ?? []) as Project[]
 
-  function handleSave() {
-    if (token.trim()) {
-      setToken(token.trim())
-      resetTodoistApi()
+  async function handleSave() {
+    const nextToken = token.trim()
+    if (nextToken && nextToken !== getToken()) {
+      await replaceTodoistToken(queryClient, nextToken)
     }
     setPreferences({
       filterQuery: filter,
@@ -56,9 +62,8 @@ export function SettingsPage() {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  function handleClearToken() {
-    clearToken()
-    resetTodoistApi()
+  async function handleClearToken() {
+    await replaceTodoistToken(queryClient, null)
     setTokenState('')
   }
 
@@ -122,18 +127,26 @@ export function SettingsPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Someday/Maybe project</label>
-              <select
-                value={somedayId}
-                onChange={(e) => setSomedayId(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">None</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              {projectsError ? (
+                <TodoistReadError
+                  onRetry={() => void refetchProjects()}
+                  isRetrying={projectsFetching}
+                  showSettingsLink={false}
+                />
+              ) : (
+                <select
+                  value={somedayId}
+                  onChange={(e) => setSomedayId(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">None</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <Separator />

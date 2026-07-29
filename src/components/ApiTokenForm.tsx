@@ -1,17 +1,19 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
-import { setToken } from '~/lib/storage'
+import { replaceTodoistToken } from '~/lib/todoist-session'
 
 export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
   const [value, setValue] = useState('')
+  const queryClient = useQueryClient()
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = value.trim()
     if (!trimmed) return
-    setToken(trimmed)
+    await replaceTodoistToken(queryClient, trimmed)
     onSaved()
   }
 

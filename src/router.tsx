@@ -4,6 +4,8 @@ import { Home } from './routes/index'
 import { ReviewPage } from './routes/review'
 import { SettingsPage } from './routes/settings'
 import { WeeklyReviewPage } from './routes/weekly-review'
+import { getToken } from './lib/storage'
+import { requireTodoistToken } from './lib/route-guards'
 
 const rootRoute = createRootRoute({
   component: RootComponent,
@@ -18,12 +20,14 @@ const indexRoute = createRoute({
 const reviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/review',
+  beforeLoad: () => requireTodoistToken(getToken()),
   component: ReviewPage,
 })
 
 const weeklyReviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/weekly-review',
+  beforeLoad: () => requireTodoistToken(getToken()),
   component: WeeklyReviewPage,
 })
 

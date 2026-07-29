@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
-import { getPreferences, getToken } from '~/lib/storage'
+import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import {
@@ -32,6 +32,7 @@ import { SomedayReviewCard } from '~/components/weekly-review/SomedayReviewCard'
 import { WeeklyReviewProgress } from '~/components/weekly-review/WeeklyReviewProgress'
 import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSummary'
 import { Loader2 } from 'lucide-react'
+import { TodoistReadError } from '~/components/TodoistReadError'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -41,12 +42,13 @@ export function WeeklyReviewPage() {
   const [state, dispatch] = useReducer(weeklyReviewReducer, weeklyInitialState)
   const [started, setStarted] = useState(false)
 
-  if (!getToken()) {
-    navigate({ to: '/' })
-    return null
-  }
-
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
+  const {
+    data: projectsData,
+    isLoading: projectsLoading,
+    isError: projectsError,
+    isFetching: projectsFetching,
+    refetch: refetchProjects,
+  } = useQuery({
     queryKey: queryKeys.projects,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -54,7 +56,13 @@ export function WeeklyReviewPage() {
     },
   })
 
-  const { data: inboxData, isLoading: inboxLoading } = useQuery({
+  const {
+    data: inboxData,
+    isLoading: inboxLoading,
+    isError: inboxError,
+    isFetching: inboxFetching,
+    refetch: refetchInbox,
+  } = useQuery({
     queryKey: queryKeys.inboxTasks,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -62,7 +70,13 @@ export function WeeklyReviewPage() {
     },
   })
 
-  const { data: upcomingData, isLoading: upcomingLoading } = useQuery({
+  const {
+    data: upcomingData,
+    isLoading: upcomingLoading,
+    isError: upcomingError,
+    isFetching: upcomingFetching,
+    refetch: refetchUpcoming,
+  } = useQuery({
     queryKey: queryKeys.upcomingTasks,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -96,7 +110,13 @@ export function WeeklyReviewPage() {
   })
 
   // Single query to fetch all tasks, paginated
-  const { data: allTasksData, isLoading: allTasksLoading } = useQuery({
+  const {
+    data: allTasksData,
+    isLoading: allTasksLoading,
+    isError: allTasksError,
+    isFetching: allTasksFetching,
+    refetch: refetchAllTasks,
+  } = useQuery({
     queryKey: queryKeys.allTasks,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -113,9 +133,10 @@ export function WeeklyReviewPage() {
   })
 
   const isLoading = projectsLoading || inboxLoading || upcomingLoading || allTasksLoading
+  const isReadError = projectsError || inboxError || upcomingError || allTasksError
 
   useEffect(() => {
-    if (!isLoading && !started && inboxData && allTasksData) {
+    if (!isLoading && !isReadError && !started && inboxData && allTasksData) {
       const inboxTasks = inboxData.results ?? []
       const upcomingTasks = upcomingData?.results ?? []
 
@@ -148,7 +169,7 @@ export function WeeklyReviewPage() {
       })
       setStarted(true)
     }
-  }, [isLoading, started, inboxData, allTasksData, upcomingData])
+  }, [isLoading, isReadError, started, inboxData, allTasksData, upcomingData])
 
   const moveTask = useMoveTask()
   const scheduleTask = useScheduleTask()
@@ -341,6 +362,24 @@ export function WeeklyReviewPage() {
     handleProjectSkip,
     handleStop,
   ])
+
+  if (isReadError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <TodoistReadError
+          onRetry={() => void Promise.all([
+            refetchProjects(),
+            refetchInbox(),
+            refetchUpcoming(),
+            refetchAllTasks(),
+          ])}
+          isRetrying={
+            projectsFetching || inboxFetching || upcomingFetching || allTasksFetching
+          }
+        />
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (

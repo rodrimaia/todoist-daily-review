@@ -9,12 +9,10 @@ import { queryKeys } from '~/lib/query-keys'
 import { getPreferences } from '~/lib/storage'
 import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
+import { TodoistReadError } from '~/components/TodoistReadError'
 
 export function Home() {
   const [hasToken, setHasToken] = useState(() => !!getToken())
-  const navigate = useNavigate()
-
-
 
   const handleTokenSaved = useCallback(() => {
     setHasToken(true)
@@ -35,7 +33,13 @@ function Dashboard() {
   const navigate = useNavigate()
   const prefs = getPreferences()
 
-  const { data: inboxData, isLoading: inboxLoading } = useQuery({
+  const {
+    data: inboxData,
+    isLoading: inboxLoading,
+    isError: inboxError,
+    isFetching: inboxFetching,
+    refetch: refetchInbox,
+  } = useQuery({
     queryKey: queryKeys.inboxTasks,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -43,7 +47,13 @@ function Dashboard() {
     },
   })
 
-  const { data: filterData, isLoading: filterLoading } = useQuery({
+  const {
+    data: filterData,
+    isLoading: filterLoading,
+    isError: filterError,
+    isFetching: filterFetching,
+    refetch: refetchFilter,
+  } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
     queryFn: async () => {
       const api = getTodoistApi()
@@ -54,6 +64,17 @@ function Dashboard() {
   const inboxCount = inboxData?.results?.length ?? 0
   const filterCount = filterData?.results?.length ?? 0
   const isLoading = inboxLoading || filterLoading
+
+  if (inboxError || filterError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <TodoistReadError
+          onRetry={() => void Promise.all([refetchInbox(), refetchFilter()])}
+          isRetrying={inboxFetching || filterFetching}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-8">

@@ -1,7 +1,16 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTodoistApi } from './todoist'
+import { invalidateTodoistCache } from './todoist-cache'
+
+function useInvalidateTodoistCache() {
+  const queryClient = useQueryClient()
+  return () => {
+    void invalidateTodoistCache(queryClient)
+  }
+}
 
 export function useMoveTask() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async ({
       taskId,
@@ -18,10 +27,12 @@ export function useMoveTask() {
         await api.updateTask(taskId, { labels })
       }
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useScheduleTask() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async ({
       taskId,
@@ -38,37 +49,45 @@ export function useScheduleTask() {
         ...(labels ? { labels } : {}),
       })
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useCompleteTask() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async (taskId: string) => {
       const api = getTodoistApi()
       await api.closeTask(taskId)
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useDeleteTask() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async (taskId: string) => {
       const api = getTodoistApi()
       await api.deleteTask(taskId)
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useCreateProject() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async (name: string) => {
       const api = getTodoistApi()
       return api.addProject({ name })
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useAddTask() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async ({
       content,
@@ -89,14 +108,17 @@ export function useAddTask() {
         ...(dueString ? { dueString } : {}),
       })
     },
+    onSuccess: invalidateCache,
   })
 }
 
 export function useDeleteProject() {
+  const invalidateCache = useInvalidateTodoistCache()
   return useMutation({
     mutationFn: async (projectId: string) => {
       const api = getTodoistApi()
       await api.deleteProject(projectId)
     },
+    onSuccess: invalidateCache,
   })
 }

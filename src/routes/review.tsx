@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
-import { getPreferences, getToken } from '~/lib/storage'
+import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import {
@@ -25,6 +25,7 @@ import { FilterActionBar } from '~/components/FilterActionBar'
 import { ReviewProgress } from '~/components/ReviewProgress'
 import { ReviewSummary } from '~/components/ReviewSummary'
 import { Loader2 } from 'lucide-react'
+import { TodoistReadError } from '~/components/TodoistReadError'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -34,12 +35,13 @@ export function ReviewPage() {
   const [state, dispatch] = useReducer(reviewReducer, initialState)
   const [started, setStarted] = useState(false)
 
-  if (!getToken()) {
-    navigate({ to: '/' })
-    return null
-  }
-
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
+  const {
+    data: projectsData,
+    isLoading: projectsLoading,
+    isError: projectsError,
+    isFetching: projectsFetching,
+    refetch: refetchProjects,
+  } = useQuery({
     queryKey: queryKeys.projects,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -47,7 +49,13 @@ export function ReviewPage() {
     },
   })
 
-  const { data: inboxData, isLoading: inboxLoading } = useQuery({
+  const {
+    data: inboxData,
+    isLoading: inboxLoading,
+    isError: inboxError,
+    isFetching: inboxFetching,
+    refetch: refetchInbox,
+  } = useQuery({
     queryKey: queryKeys.inboxTasks,
     queryFn: async () => {
       const api = getTodoistApi()
@@ -55,7 +63,13 @@ export function ReviewPage() {
     },
   })
 
-  const { data: filterData, isLoading: filterLoading } = useQuery({
+  const {
+    data: filterData,
+    isLoading: filterLoading,
+    isError: filterError,
+    isFetching: filterFetching,
+    refetch: refetchFilter,
+  } = useQuery({
     queryKey: queryKeys.filterTasks(prefs.filterQuery),
     queryFn: async () => {
       const api = getTodoistApi()
@@ -64,18 +78,19 @@ export function ReviewPage() {
   })
 
   const isLoading = projectsLoading || inboxLoading || filterLoading
+  const isReadError = projectsError || inboxError || filterError
 
   const projects = (projectsData?.results ?? []) as Project[]
   const projectMap = new Map<string, Project>(projects.map((p) => [p.id, p]))
 
   useEffect(() => {
-    if (!isLoading && !started && inboxData && filterData !== undefined) {
+    if (!isLoading && !isReadError && !started && inboxData && filterData !== undefined) {
       const inboxTasks = inboxData.results ?? []
       const filterTasks = filterData.results ?? []
       dispatch({ type: 'START', inboxTasks, filterTasks })
       setStarted(true)
     }
-  }, [isLoading, started, inboxData, filterData])
+  }, [isLoading, isReadError, started, inboxData, filterData])
 
   const moveTask = useMoveTask()
   const scheduleTask = useScheduleTask()
@@ -225,6 +240,17 @@ export function ReviewPage() {
     handleFilterSchedule,
     handleStop,
   ])
+
+  if (isReadError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <TodoistReadError
+          onRetry={() => void Promise.all([refetchProjects(), refetchInbox(), refetchFilter()])}
+          isRetrying={projectsFetching || inboxFetching || filterFetching}
+        />
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (
