@@ -23,6 +23,7 @@ export function useMoveTask() {
     }) => {
       const api = getTodoistApi()
       await api.moveTask(taskId, { projectId })
+      invalidateCache()
       if (labels) {
         await api.updateTask(taskId, { labels })
       }
