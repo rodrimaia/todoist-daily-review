@@ -62,7 +62,6 @@ export function ReviewSummary({
             <div className="space-y-1">
               <StatRow icon={FolderOpen} label="Moved to project" count={inboxStats.moved} />
               <StatRow icon={Lightbulb} label="Someday/Maybe" count={inboxStats.someday} />
-              <StatRow icon={CalendarDays} label="Scheduled" count={inboxStats.scheduled} />
               <StatRow icon={Check} label="Completed" count={inboxStats.completed} />
               <StatRow icon={Trash2} label="Deleted" count={inboxStats.deleted} />
               <StatRow icon={SkipForward} label="Skipped" count={inboxStats.skipped} />

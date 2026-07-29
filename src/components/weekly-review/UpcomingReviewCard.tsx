@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { startOfDay, parseISO, format, isEqual, isBefore, addDays } from 'date-fns'
 import type { UpcomingStats } from '~/lib/weekly-review-machine'
+import { canChangeTaskDueDate } from '~/lib/task-decisions'
 
 type Project = PersonalProject | WorkspaceProject
 type TaskAction = 'rescheduled' | 'completed' | 'removed_date' | null
@@ -66,13 +67,14 @@ function TaskRow({
   task: Task
   projectMap: Map<string, Project>
   action: TaskAction
-  onReschedule: (taskId: string, dueString: string) => void
+  onReschedule: (task: Task, dueString: string) => void
   onComplete: (taskId: string) => void
-  onRemoveDate: (taskId: string) => void
+  onRemoveDate: (task: Task) => void
 }) {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const project = projectMap.get(task.projectId)
   const isRecurring = task.due?.isRecurring
+  const canChangeDueDate = canChangeTaskDueDate(task)
 
   if (action) {
     return (
@@ -83,7 +85,7 @@ function TaskRow({
     )
   }
 
-  if (showDatePicker) {
+  if (showDatePicker && canChangeDueDate) {
     return (
       <div className="py-1.5 space-y-1">
         <p className="text-sm">{task.content}</p>
@@ -100,7 +102,7 @@ function TaskRow({
               size="sm"
               className="h-6 text-xs px-2"
               onClick={() => {
-                onReschedule(task.id, opt.value)
+                onReschedule(task, opt.value)
                 setShowDatePicker(false)
               }}
             >
@@ -132,15 +134,17 @@ function TaskRow({
         <span className="text-[10px] text-muted-foreground shrink-0">recurring</span>
       )}
       <div className="flex gap-0.5 shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowDatePicker(true)}
-          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-          title="Reschedule"
-        >
-          <CalendarRange className="h-3.5 w-3.5" />
-        </Button>
+        {canChangeDueDate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDatePicker(true)}
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            title="Reschedule"
+          >
+            <CalendarRange className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -150,15 +154,17 @@ function TaskRow({
         >
           <Check className="h-3.5 w-3.5" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRemoveDate(task.id)}
-          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-          title="Remove date"
-        >
-          <CalendarOff className="h-3.5 w-3.5" />
-        </Button>
+        {canChangeDueDate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemoveDate(task)}
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            title="Remove date"
+          >
+            <CalendarOff className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -175,18 +181,19 @@ export function UpcomingReviewCard({
 }: {
   tasks: Task[]
   projectMap: Map<string, Project>
-  onReschedule: (taskId: string, dueString: string) => void
+  onReschedule: (task: Task, dueString: string) => void
   onComplete: (taskId: string) => void
-  onRemoveDate: (taskId: string) => void
+  onRemoveDate: (task: Task) => void
   onDone: (stats: UpcomingStats) => void
   onStop: () => void
 }) {
   const [actions, setActions] = useState<Map<string, TaskAction>>(new Map())
   const dayGroups = useMemo(() => groupByDay(tasks), [tasks])
 
-  function handleReschedule(taskId: string, dueString: string) {
-    onReschedule(taskId, dueString)
-    setActions((prev) => new Map(prev).set(taskId, 'rescheduled'))
+  function handleReschedule(task: Task, dueString: string) {
+    if (!canChangeTaskDueDate(task)) return
+    onReschedule(task, dueString)
+    setActions((prev) => new Map(prev).set(task.id, 'rescheduled'))
   }
 
   function handleComplete(taskId: string) {
@@ -194,9 +201,10 @@ export function UpcomingReviewCard({
     setActions((prev) => new Map(prev).set(taskId, 'completed'))
   }
 
-  function handleRemoveDate(taskId: string) {
-    onRemoveDate(taskId)
-    setActions((prev) => new Map(prev).set(taskId, 'removed_date'))
+  function handleRemoveDate(task: Task) {
+    if (!canChangeTaskDueDate(task)) return
+    onRemoveDate(task)
+    setActions((prev) => new Map(prev).set(task.id, 'removed_date'))
   }
 
   function handleDone() {

@@ -19,4 +19,4 @@ A session command that ends the Daily Review without making a task decision for 
 _Avoid_: Skip
 
 **Recurring task**:
-A task whose Todoist due data explicitly identifies it as recurring.
+A task whose Todoist due data explicitly identifies it as recurring. Daily Filter and Weekly Upcoming must not reschedule it or remove its date; completing it is what advances the recurrence.

@@ -2,19 +2,18 @@ import type { Task } from '@doist/todoist-sdk'
 
 export type Phase = 'inbox' | 'filter' | 'summary'
 
-export type TaskActionType =
+export type InboxDecisionType =
   | 'move_to_project'
   | 'move_to_someday'
-  | 'schedule'
   | 'complete'
   | 'delete'
-  | 'remove_date'
   | 'skip'
+
+export type FilterDecisionType = 'schedule' | 'remove_date' | 'complete' | 'skip'
 
 export interface InboxStats {
   moved: number
   someday: number
-  scheduled: number
   completed: number
   deleted: number
   skipped: number
@@ -42,12 +41,12 @@ export interface ReviewState {
 
 export type ReviewAction =
   | { type: 'START'; inboxTasks: Task[]; filterTasks: Task[] }
-  | { type: 'INBOX_ACTION'; action: TaskActionType; dueString?: string }
-  | { type: 'FILTER_ACTION'; action: TaskActionType; dueString?: string }
+  | { type: 'INBOX_ACTION'; action: InboxDecisionType }
+  | { type: 'FILTER_ACTION'; action: FilterDecisionType; dueString?: string }
   | { type: 'STOP' }
 
 function emptyInboxStats(): InboxStats {
-  return { moved: 0, someday: 0, scheduled: 0, completed: 0, deleted: 0, skipped: 0 }
+  return { moved: 0, someday: 0, completed: 0, deleted: 0, skipped: 0 }
 }
 
 function emptyFilterStats(): FilterStats {
@@ -109,7 +108,6 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
       switch (action.action) {
         case 'move_to_project': stats.moved++; break
         case 'move_to_someday': stats.someday++; break
-        case 'schedule': stats.scheduled++; break
         case 'complete': stats.completed++; break
         case 'delete': stats.deleted++; break
         case 'skip': stats.skipped++; break
@@ -157,7 +155,7 @@ export function getTotalTasks(state: ReviewState): number {
 }
 
 export function getInboxTotal(stats: InboxStats): number {
-  return stats.moved + stats.someday + stats.scheduled + stats.completed + stats.deleted + stats.skipped
+  return stats.moved + stats.someday + stats.completed + stats.deleted + stats.skipped
 }
 
 export function getFilterTotal(stats: FilterStats): number {

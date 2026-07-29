@@ -8,22 +8,24 @@ export function FilterActionBar({
   onSkip,
   onStop,
   isRecurring,
+  canChangeDueDate,
 }: {
   onSchedule: (dueString: string) => void
   onComplete: () => void
   onSkip: () => void
   onStop: () => void
   isRecurring?: boolean
+  canChangeDueDate: boolean
 }) {
   return (
     <div className="w-full max-w-md space-y-3">
-      {isRecurring ? (
+      {canChangeDueDate ? (
+        <DatePicker onSelect={onSchedule} />
+      ) : (
         <p className="text-xs text-muted-foreground flex items-center gap-1.5">
           <Repeat className="h-3 w-3" />
           Recurring task - complete to advance to next date
         </p>
-      ) : (
-        <DatePicker onSelect={onSchedule} />
       )}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onComplete} className="gap-1.5">

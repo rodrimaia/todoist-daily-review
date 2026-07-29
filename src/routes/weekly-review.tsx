@@ -5,6 +5,7 @@ import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences, getToken } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
+import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import {
   weeklyReviewReducer,
   weeklyInitialState,
@@ -186,16 +187,6 @@ export function WeeklyReviewPage() {
     dispatch({ type: 'INBOX_ACTION', action: 'move_to_someday' })
   }, [currentTask, prefs.somedayProjectId, moveTask])
 
-  const handleInboxSchedule = useCallback(
-    (dueString: string) => {
-      if (!currentTask) return
-      const labels = addNextActionLabel(currentTask)
-      scheduleTask.mutate({ taskId: currentTask.id, dueString, labels })
-      dispatch({ type: 'INBOX_ACTION', action: 'schedule', dueString })
-    },
-    [currentTask, scheduleTask, addNextActionLabel],
-  )
-
   const handleInboxComplete = useCallback(() => {
     if (!currentTask) return
     completeTask.mutate(currentTask.id)
@@ -264,8 +255,9 @@ export function WeeklyReviewPage() {
 
   // Upcoming handlers (batch/list view)
   const handleUpcomingReschedule = useCallback(
-    (taskId: string, dueString: string) => {
-      scheduleTask.mutate({ taskId, dueString })
+    (task: Task, dueString: string) => {
+      if (!canChangeTaskDueDate(task)) return
+      scheduleTask.mutate({ taskId: task.id, dueString })
     },
     [scheduleTask],
   )
@@ -278,8 +270,9 @@ export function WeeklyReviewPage() {
   )
 
   const handleUpcomingRemoveDate = useCallback(
-    (taskId: string) => {
-      scheduleTask.mutate({ taskId, dueString: null })
+    (task: Task) => {
+      if (!canChangeTaskDueDate(task)) return
+      scheduleTask.mutate({ taskId: task.id, dueString: null })
     },
     [scheduleTask],
   )

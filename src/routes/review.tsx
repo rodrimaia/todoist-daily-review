@@ -5,6 +5,7 @@ import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences, getToken } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
+import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import {
   reviewReducer,
   initialState,
@@ -84,6 +85,7 @@ export function ReviewPage() {
 
   const currentTask = getCurrentTask(state)
   const canSkip = currentTask?.due?.isRecurring === true
+  const canChangeDueDate = currentTask ? canChangeTaskDueDate(currentTask) : false
 
   const addNextActionLabel = useCallback(
     (task: Task): string[] => {
@@ -113,16 +115,6 @@ export function ReviewPage() {
     dispatch({ type: 'INBOX_ACTION', action: 'move_to_someday' })
   }, [currentTask, prefs.somedayProjectId, moveTask])
 
-  const handleInboxSchedule = useCallback(
-    (dueString: string) => {
-      if (!currentTask) return
-      const labels = addNextActionLabel(currentTask)
-      scheduleTask.mutate({ taskId: currentTask.id, dueString, labels })
-      dispatch({ type: 'INBOX_ACTION', action: 'schedule', dueString })
-    },
-    [currentTask, scheduleTask, addNextActionLabel],
-  )
-
   const handleInboxComplete = useCallback(() => {
     if (!currentTask) return
     completeTask.mutate(currentTask.id)
@@ -141,7 +133,7 @@ export function ReviewPage() {
 
   const handleFilterSchedule = useCallback(
     (dueString: string) => {
-      if (!currentTask) return
+      if (!currentTask || !canChangeTaskDueDate(currentTask)) return
       if (dueString === 'no date') {
         scheduleTask.mutate({ taskId: currentTask.id, dueString: null })
         dispatch({ type: 'FILTER_ACTION', action: 'remove_date' })
@@ -199,19 +191,19 @@ export function ReviewPage() {
           // handled by InboxActionBar internally
           break
         case '1':
-          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('today')
+          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('today')
           break
         case '2':
-          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('tomorrow')
+          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('tomorrow')
           break
         case '3':
-          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('saturday')
+          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('saturday')
           break
         case '4':
-          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('monday')
+          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('monday')
           break
         case '0':
-          if (state.phase === 'filter' && !currentTask?.due?.isRecurring) handleFilterSchedule('no date')
+          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('no date')
           break
         case 'Escape':
           handleStop()
@@ -224,10 +216,10 @@ export function ReviewPage() {
   }, [
     state.phase,
     canSkip,
+    canChangeDueDate,
     handleInboxComplete,
     handleInboxDelete,
     handleInboxSkip,
-    handleInboxSchedule,
     handleFilterComplete,
     handleFilterSkip,
     handleFilterSchedule,
@@ -292,6 +284,7 @@ export function ReviewPage() {
           onSkip={handleFilterSkip}
           onStop={handleStop}
           isRecurring={canSkip}
+          canChangeDueDate={canChangeDueDate}
         />
       )}
     </div>

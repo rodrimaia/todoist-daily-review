@@ -6,3 +6,5 @@ dist
 .cursor
 .env*
 *.md
+.agents
+skills-lock.json

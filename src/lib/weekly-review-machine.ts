@@ -51,7 +51,7 @@ export type WeeklyReviewAction =
       somedayTasks: Task[]
       upcomingTasks: Task[]
     }
-  | { type: 'INBOX_ACTION'; action: InboxActionType; dueString?: string }
+  | { type: 'INBOX_ACTION'; action: InboxActionType }
   | { type: 'PROJECT_ACTION'; action: ProjectActionType }
   | { type: 'SOMEDAY_DONE'; stats: SomedayStats }
   | { type: 'UPCOMING_DONE'; stats: UpcomingStats }
@@ -60,7 +60,6 @@ export type WeeklyReviewAction =
 type InboxActionType =
   | 'move_to_project'
   | 'move_to_someday'
-  | 'schedule'
   | 'complete'
   | 'delete'
   | 'skip'
@@ -73,7 +72,7 @@ export interface UpcomingStats {
 }
 
 function emptyInboxStats(): InboxStats {
-  return { moved: 0, someday: 0, scheduled: 0, completed: 0, deleted: 0, skipped: 0 }
+  return { moved: 0, someday: 0, completed: 0, deleted: 0, skipped: 0 }
 }
 
 function emptyUpcomingStats(): UpcomingStats {
@@ -158,7 +157,6 @@ export function weeklyReviewReducer(
       switch (action.action) {
         case 'move_to_project': stats.moved++; break
         case 'move_to_someday': stats.someday++; break
-        case 'schedule': stats.scheduled++; break
         case 'complete': stats.completed++; break
         case 'delete': stats.deleted++; break
         case 'skip': stats.skipped++; break
