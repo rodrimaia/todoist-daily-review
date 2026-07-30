@@ -8,6 +8,7 @@ export function invalidateTodoistCache(queryClient: QueryClient): Promise<void> 
 
 /** Cancels account-scoped reads before removing every cached account value. */
 export async function clearTodoistCache(queryClient: QueryClient): Promise<void> {
-  await queryClient.cancelQueries({ queryKey: queryKeys.todoist })
+  const cancellation = queryClient.cancelQueries({ queryKey: queryKeys.todoist })
   queryClient.clear()
+  await cancellation
 }

@@ -1,8 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { QueryClient } from '@tanstack/react-query'
 import { queryKeys } from './query-keys'
-import { getToken, setToken } from './storage'
-import { replaceTodoistToken } from './todoist-session'
+import {
+  getToken,
+  setToken,
+  TODOIST_TOKEN_STORAGE_KEY,
+} from './storage'
+import {
+  observeTodoistTokenChanges,
+  replaceTodoistToken,
+} from './todoist-session'
 
 function memoryStorage(): Storage {
   const values = new Map<string, string>()
@@ -27,11 +34,25 @@ beforeEach(() => {
     configurable: true,
     value: memoryStorage(),
   })
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: new EventTarget(),
+  })
 })
 
 afterEach(() => {
   delete (globalThis as { localStorage?: Storage }).localStorage
+  delete (globalThis as { window?: Window }).window
 })
+
+function dispatchStorage(key: string | null): void {
+  const event = new Event('storage')
+  Object.defineProperties(event, {
+    key: { value: key },
+    storageArea: { value: localStorage },
+  })
+  window.dispatchEvent(event)
+}
 
 describe('Todoist identity changes', () => {
   test('replaces the token only after clearing old account cache data', async () => {
@@ -55,5 +76,23 @@ describe('Todoist identity changes', () => {
 
     expect(getToken()).toBeNull()
     expect(queryClient.getQueryData(queryKeys.inboxTasks)).toBeUndefined()
+  })
+
+  test('leaves mounted reviews and clears cache after another tab changes identity', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(queryKeys.projects, ['old-account'])
+    let identityChanges = 0
+    const unsubscribe = observeTodoistTokenChanges(queryClient, () => {
+      identityChanges++
+    })
+
+    dispatchStorage(TODOIST_TOKEN_STORAGE_KEY)
+
+    expect(queryClient.getQueryData(queryKeys.projects)).toBeUndefined()
+    expect(identityChanges).toBe(1)
+
+    unsubscribe()
+    dispatchStorage(TODOIST_TOKEN_STORAGE_KEY)
+    expect(identityChanges).toBe(1)
   })
 })
