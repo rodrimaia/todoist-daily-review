@@ -3,6 +3,8 @@ import { QueryClient } from '@tanstack/react-query'
 import { queryKeys } from './query-keys'
 import {
   getToken,
+  getPreferences,
+  setPreferences,
   setToken,
   TODOIST_TOKEN_STORAGE_KEY,
 } from './storage'
@@ -58,11 +60,13 @@ describe('Todoist identity changes', () => {
   test('replaces the token only after clearing old account cache data', async () => {
     const queryClient = new QueryClient()
     setToken('old-secret')
+    setPreferences({ somedayProjectId: 'old-project' })
     queryClient.setQueryData(queryKeys.projects, ['old-account'])
 
     await replaceTodoistToken(queryClient, 'new-secret')
 
     expect(getToken()).toBe('new-secret')
+    expect(getPreferences().somedayProjectId).toBeNull()
     expect(queryClient.getQueryData(queryKeys.projects)).toBeUndefined()
     expect(JSON.stringify(queryKeys.projects)).not.toContain('new-secret')
   })
@@ -78,9 +82,10 @@ describe('Todoist identity changes', () => {
     expect(queryClient.getQueryData(queryKeys.inboxTasks)).toBeUndefined()
   })
 
-  test('leaves mounted reviews and clears cache after another tab changes identity', () => {
+  test('notifies the app and clears account state after another tab changes identity', () => {
     const queryClient = new QueryClient()
     queryClient.setQueryData(queryKeys.projects, ['old-account'])
+    setPreferences({ somedayProjectId: 'old-project' })
     let identityChanges = 0
     const unsubscribe = observeTodoistTokenChanges(queryClient, () => {
       identityChanges++
@@ -89,6 +94,7 @@ describe('Todoist identity changes', () => {
     dispatchStorage(TODOIST_TOKEN_STORAGE_KEY)
 
     expect(queryClient.getQueryData(queryKeys.projects)).toBeUndefined()
+    expect(getPreferences().somedayProjectId).toBeNull()
     expect(identityChanges).toBe(1)
 
     unsubscribe()

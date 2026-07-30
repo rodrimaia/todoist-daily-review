@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import {
   clearToken,
+  setPreferences,
   setToken,
   TODOIST_TOKEN_STORAGE_KEY,
 } from './storage'
@@ -20,6 +21,7 @@ export function observeTodoistTokenChanges(
     }
 
     void clearTodoistCache(queryClient)
+    setPreferences({ somedayProjectId: null })
     resetTodoistApi()
     onIdentityChange()
   }
@@ -33,6 +35,7 @@ export async function replaceTodoistToken(
   token: string | null,
 ): Promise<void> {
   await clearTodoistCache(queryClient)
+  setPreferences({ somedayProjectId: null })
 
   if (token) setToken(token)
   else clearToken()

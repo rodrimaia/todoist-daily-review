@@ -8,14 +8,14 @@ function createQueryClient() {
 }
 
 describe('Todoist cache coherence', () => {
-  test('invalidates all Todoist query families after a successful mutation', async () => {
+  test('invalidates only the selected Todoist query family', async () => {
     const queryClient = createQueryClient()
     queryClient.setQueryData(queryKeys.projects, ['project'])
     queryClient.setQueryData(queryKeys.inboxTasks, ['task'])
 
-    await invalidateTodoistCache(queryClient)
+    await invalidateTodoistCache(queryClient, queryKeys.tasks)
 
-    expect(queryClient.getQueryState(queryKeys.projects)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(queryKeys.projects)?.isInvalidated).toBe(false)
     expect(queryClient.getQueryState(queryKeys.inboxTasks)?.isInvalidated).toBe(true)
   })
 

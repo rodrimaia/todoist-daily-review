@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAppearance } from '~/lib/use-appearance'
@@ -15,11 +15,13 @@ const queryClient = new QueryClient({
 
 export function RootComponent() {
   const router = useRouter()
+  const [identityVersion, setIdentityVersion] = useState(0)
   useAppearance()
 
   useEffect(
     () =>
       observeTodoistTokenChanges(queryClient, () => {
+        setIdentityVersion((version) => version + 1)
         void router.navigate({ to: '/', replace: true })
       }),
     [router],
@@ -27,7 +29,7 @@ export function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <Outlet key={identityVersion} />
     </QueryClientProvider>
   )
 }

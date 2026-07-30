@@ -50,12 +50,14 @@ export function SettingsPage() {
 
   async function handleSave() {
     const nextToken = token.trim()
-    if (nextToken && nextToken !== getToken()) {
+    const identityChanged = !!nextToken && nextToken !== getToken()
+    if (identityChanged) {
       await replaceTodoistToken(queryClient, nextToken)
+      setSomedayId('')
     }
     setPreferences({
       filterQuery: filter,
-      somedayProjectId: somedayId || null,
+      somedayProjectId: identityChanged ? null : somedayId || null,
       excludeProjectPrefixes: excludePrefixes,
     })
     setSaved(true)
