@@ -11,10 +11,10 @@ import {
   ArrowRight,
   CalendarRange,
   CalendarOff,
-  PartyPopper,
 } from 'lucide-react'
 import type { InboxStats, FilterStats } from '~/lib/review-machine'
 import { getInboxTotal, getFilterTotal } from '~/lib/review-machine'
+import { Celebration } from '~/components/Celebration'
 
 function StatRow({
   icon: Icon,
@@ -51,59 +51,52 @@ export function ReviewSummary({
   const hasReviewedItems = inboxTotal > 0 || filterTotal > 0
 
   return (
-    <Card className="w-full max-w-md animate-in fade-in duration-200">
-      <CardHeader>
-        <CardTitle className="text-xl">Review Complete</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {inboxTotal > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Inbox ({inboxTotal})</p>
-            <div className="space-y-1">
-              <StatRow icon={FolderOpen} label="Moved to project" count={inboxStats.moved} />
-              <StatRow icon={Lightbulb} label="Someday/Maybe" count={inboxStats.someday} />
-              <StatRow icon={Check} label="Completed" count={inboxStats.completed} />
-              <StatRow icon={Trash2} label="Deleted" count={inboxStats.deleted} />
-              <StatRow icon={SkipForward} label="Skipped" count={inboxStats.skipped} />
+    <>
+      {hasReviewedItems && <Celebration />}
+      <Card className="w-full max-w-md animate-in fade-in duration-200">
+        <CardHeader>
+          <CardTitle className="text-xl">Review Complete</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {inboxTotal > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Inbox ({inboxTotal})</p>
+              <div className="space-y-1">
+                <StatRow icon={FolderOpen} label="Moved to project" count={inboxStats.moved} />
+                <StatRow icon={Lightbulb} label="Someday/Maybe" count={inboxStats.someday} />
+                <StatRow icon={Check} label="Completed" count={inboxStats.completed} />
+                <StatRow icon={Trash2} label="Deleted" count={inboxStats.deleted} />
+                <StatRow icon={SkipForward} label="Skipped" count={inboxStats.skipped} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {inboxTotal > 0 && filterTotal > 0 && <Separator />}
+          {inboxTotal > 0 && filterTotal > 0 && <Separator />}
 
-        {filterTotal > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Review ({filterTotal})</p>
-            <div className="space-y-1">
-              <StatRow icon={CalendarDays} label="Today" count={filterStats.rescheduledToday} />
-              <StatRow icon={ArrowRight} label="Tomorrow" count={filterStats.rescheduledTomorrow} />
-              <StatRow icon={CalendarRange} label="Saturday" count={filterStats.rescheduledSaturday} />
-              <StatRow icon={CalendarRange} label="Monday" count={filterStats.rescheduledMonday} />
-              <StatRow icon={CalendarOff} label="Removed date" count={filterStats.removedDate} />
-              <StatRow icon={Check} label="Completed" count={filterStats.completed} />
-              <StatRow icon={SkipForward} label="Skipped" count={filterStats.skipped} />
+          {filterTotal > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Review ({filterTotal})</p>
+              <div className="space-y-1">
+                <StatRow icon={CalendarDays} label="Today" count={filterStats.rescheduledToday} />
+                <StatRow icon={ArrowRight} label="Tomorrow" count={filterStats.rescheduledTomorrow} />
+                <StatRow icon={CalendarRange} label="Saturday" count={filterStats.rescheduledSaturday} />
+                <StatRow icon={CalendarRange} label="Monday" count={filterStats.rescheduledMonday} />
+                <StatRow icon={CalendarOff} label="Removed date" count={filterStats.removedDate} />
+                <StatRow icon={Check} label="Completed" count={filterStats.completed} />
+                <StatRow icon={SkipForward} label="Skipped" count={filterStats.skipped} />
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {hasReviewedItems && (
-          <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-md bg-accent/50 animate-in zoom-in duration-300">
-            <PartyPopper className="h-5 w-5 text-chart-5" />
-            <span className="text-sm font-medium text-accent-foreground">
-              Daily review complete — great job!
-            </span>
-            <PartyPopper className="h-5 w-5 text-chart-5" />
-          </div>
-        )}
+          {inboxTotal === 0 && filterTotal === 0 && (
+            <p className="text-sm text-muted-foreground">Nothing to review today.</p>
+          )}
 
-        {inboxTotal === 0 && filterTotal === 0 && (
-          <p className="text-sm text-muted-foreground">Nothing to review today.</p>
-        )}
-
-        <Button onClick={onDone} className="w-full mt-4">
-          Done
-        </Button>
-      </CardContent>
-    </Card>
+          <Button onClick={onDone} className="w-full mt-4">
+            Done
+          </Button>
+        </CardContent>
+      </Card>
+    </>
   )
 }
