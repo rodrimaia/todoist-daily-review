@@ -1,11 +1,11 @@
-import { useReducer, useEffect, useCallback, useState } from 'react'
+import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
-import { canChangeTaskDueDate } from '~/lib/task-decisions'
+import { canChangeTaskDueDate, canSkipTask } from '~/lib/task-decisions'
 import {
   weeklyReviewReducer,
   weeklyInitialState,
@@ -33,6 +33,7 @@ import { WeeklyReviewProgress } from '~/components/weekly-review/WeeklyReviewPro
 import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSummary'
 import { Loader2 } from 'lucide-react'
 import { TodoistReadError } from '~/components/TodoistReadError'
+import { useTodoistUser } from '~/lib/use-todoist-user'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -41,6 +42,14 @@ export function WeeklyReviewPage() {
   const prefs = getPreferences()
   const [state, dispatch] = useReducer(weeklyReviewReducer, weeklyInitialState)
   const [started, setStarted] = useState(false)
+
+  const {
+    data: user,
+    isLoading: userLoading,
+    isError: userError,
+    isFetching: userFetching,
+    refetch: refetchUser,
+  } = useTodoistUser()
 
   const {
     data: projectsData,
@@ -132,8 +141,8 @@ export function WeeklyReviewPage() {
     },
   })
 
-  const isLoading = projectsLoading || inboxLoading || upcomingLoading || allTasksLoading
-  const isReadError = projectsError || inboxError || upcomingError || allTasksError
+  const isLoading = userLoading || projectsLoading || inboxLoading || upcomingLoading || allTasksLoading
+  const isReadError = userError || projectsError || inboxError || upcomingError || allTasksError
 
   useEffect(() => {
     if (!isLoading && !isReadError && !started && inboxData && allTasksData) {
@@ -181,6 +190,13 @@ export function WeeklyReviewPage() {
 
   const currentTask = getWeeklyCurrentTask(state)
   const currentProject = getWeeklyCurrentProject(state)
+  const canSkipInboxTask = currentTask ? canSkipTask(currentTask) : false
+  const claimedInboxTasks = useRef(new Set<string>())
+  const claimInboxTask = useCallback((taskId: string) => {
+    if (claimedInboxTasks.current.has(taskId)) return false
+    claimedInboxTasks.current.add(taskId)
+    return true
+  }, [])
 
   const addNextActionLabel = useCallback((task: Task): string[] => {
     const labels = new Set(task.labels)
@@ -191,38 +207,39 @@ export function WeeklyReviewPage() {
   // Inbox handlers (same as daily review)
   const handleInboxMoveToProject = useCallback(
     (projectId: string, dueString?: string) => {
-      if (!currentTask) return
+      if (!currentTask || !claimInboxTask(currentTask.id)) return
       const labels = addNextActionLabel(currentTask)
       moveTask.mutate({ taskId: currentTask.id, projectId, labels })
       if (dueString) {
         scheduleTask.mutate({ taskId: currentTask.id, dueString })
       }
-      dispatch({ type: 'INBOX_ACTION', action: 'move_to_project' })
+      dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'move_to_project' })
     },
-    [currentTask, moveTask, scheduleTask, addNextActionLabel],
+    [currentTask, moveTask, scheduleTask, addNextActionLabel, claimInboxTask],
   )
 
   const handleInboxMoveToSomeday = useCallback(() => {
-    if (!currentTask || !prefs.somedayProjectId) return
+    if (!currentTask || !prefs.somedayProjectId || !claimInboxTask(currentTask.id)) return
     moveTask.mutate({ taskId: currentTask.id, projectId: prefs.somedayProjectId })
-    dispatch({ type: 'INBOX_ACTION', action: 'move_to_someday' })
-  }, [currentTask, prefs.somedayProjectId, moveTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'move_to_someday' })
+  }, [currentTask, prefs.somedayProjectId, moveTask, claimInboxTask])
 
   const handleInboxComplete = useCallback(() => {
-    if (!currentTask) return
+    if (!currentTask || !claimInboxTask(currentTask.id)) return
     completeTask.mutate(currentTask.id)
-    dispatch({ type: 'INBOX_ACTION', action: 'complete' })
-  }, [currentTask, completeTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'complete' })
+  }, [currentTask, completeTask, claimInboxTask])
 
   const handleInboxDelete = useCallback(() => {
-    if (!currentTask) return
+    if (!currentTask || !claimInboxTask(currentTask.id)) return
     deleteTask.mutate(currentTask.id)
-    dispatch({ type: 'INBOX_ACTION', action: 'delete' })
-  }, [currentTask, deleteTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'delete' })
+  }, [currentTask, deleteTask, claimInboxTask])
 
   const handleInboxSkip = useCallback(() => {
-    dispatch({ type: 'INBOX_ACTION', action: 'skip' })
-  }, [])
+    if (!currentTask || !canSkipTask(currentTask) || !claimInboxTask(currentTask.id)) return
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'skip' })
+  }, [currentTask, claimInboxTask])
 
   // Project handlers
   const handleProjectOk = useCallback(() => {
@@ -334,7 +351,7 @@ export function WeeklyReviewPage() {
           switch (e.key) {
             case 'c': handleInboxComplete(); break
             case 'd': handleInboxDelete(); break
-            case 's': handleInboxSkip(); break
+            case 's': if (canSkipInboxTask) handleInboxSkip(); break
           }
           break
         case 'projects':
@@ -353,6 +370,7 @@ export function WeeklyReviewPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     state.phase,
+    canSkipInboxTask,
     handleInboxComplete,
     handleInboxDelete,
     handleInboxSkip,
@@ -368,13 +386,14 @@ export function WeeklyReviewPage() {
       <div className="flex items-center justify-center min-h-screen p-4">
         <TodoistReadError
           onRetry={() => void Promise.all([
+            refetchUser(),
             refetchProjects(),
             refetchInbox(),
             refetchUpcoming(),
             refetchAllTasks(),
           ])}
           isRetrying={
-            projectsFetching || inboxFetching || upcomingFetching || allTasksFetching
+            userFetching || projectsFetching || inboxFetching || upcomingFetching || allTasksFetching
           }
         />
       </div>
@@ -472,7 +491,11 @@ export function WeeklyReviewPage() {
       />
 
       <InboxActionBar
+        key={currentTask.id}
         projects={projects}
+        task={currentTask}
+        todoistTimezone={user?.tzInfo.timezone ?? 'UTC'}
+        timeFormat={user?.timeFormat ?? 0}
         somedayProjectId={prefs.somedayProjectId}
         onMoveToProject={handleInboxMoveToProject}
         onMoveToSomeday={handleInboxMoveToSomeday}
@@ -481,6 +504,7 @@ export function WeeklyReviewPage() {
         onSkip={handleInboxSkip}
         onStop={handleStop}
         onCreateProject={handleCreateProject}
+        canSkip={canSkipInboxTask}
       />
 
     </div>

@@ -1,11 +1,11 @@
-import { useReducer, useEffect, useCallback, useState } from 'react'
+import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
-import { canChangeTaskDueDate } from '~/lib/task-decisions'
+import { canChangeTaskDueDate, canSkipTask } from '~/lib/task-decisions'
 import {
   reviewReducer,
   initialState,
@@ -26,6 +26,7 @@ import { ReviewProgress } from '~/components/ReviewProgress'
 import { ReviewSummary } from '~/components/ReviewSummary'
 import { Loader2 } from 'lucide-react'
 import { TodoistReadError } from '~/components/TodoistReadError'
+import { useTodoistUser } from '~/lib/use-todoist-user'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -34,6 +35,14 @@ export function ReviewPage() {
   const prefs = getPreferences()
   const [state, dispatch] = useReducer(reviewReducer, initialState)
   const [started, setStarted] = useState(false)
+
+  const {
+    data: user,
+    isLoading: userLoading,
+    isError: userError,
+    isFetching: userFetching,
+    refetch: refetchUser,
+  } = useTodoistUser()
 
   const {
     data: projectsData,
@@ -77,8 +86,8 @@ export function ReviewPage() {
     },
   })
 
-  const isLoading = projectsLoading || inboxLoading || filterLoading
-  const isReadError = projectsError || inboxError || filterError
+  const isLoading = userLoading || projectsLoading || inboxLoading || filterLoading
+  const isReadError = userError || projectsError || inboxError || filterError
 
   const projects = (projectsData?.results ?? []) as Project[]
   const projectMap = new Map<string, Project>(projects.map((p) => [p.id, p]))
@@ -99,8 +108,15 @@ export function ReviewPage() {
   const createProject = useCreateProject()
 
   const currentTask = getCurrentTask(state)
-  const canSkip = currentTask?.due?.isRecurring === true
+  const canSkip = currentTask ? canSkipTask(currentTask) : false
   const canChangeDueDate = currentTask ? canChangeTaskDueDate(currentTask) : false
+  const claimedDecisions = useRef(new Set<string>())
+  const claimTaskDecision = useCallback((taskId: string) => {
+    const key = `${state.phase}:${taskId}`
+    if (claimedDecisions.current.has(key)) return false
+    claimedDecisions.current.add(key)
+    return true
+  }, [state.phase])
 
   const addNextActionLabel = useCallback(
     (task: Task): string[] => {
@@ -113,62 +129,64 @@ export function ReviewPage() {
 
   const handleInboxMoveToProject = useCallback(
     (projectId: string, dueString?: string) => {
-      if (!currentTask) return
+      if (!currentTask || !claimTaskDecision(currentTask.id)) return
       const labels = addNextActionLabel(currentTask)
       moveTask.mutate({ taskId: currentTask.id, projectId, labels })
       if (dueString) {
         scheduleTask.mutate({ taskId: currentTask.id, dueString })
       }
-      dispatch({ type: 'INBOX_ACTION', action: 'move_to_project' })
+      dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'move_to_project' })
     },
-    [currentTask, moveTask, scheduleTask, addNextActionLabel],
+    [currentTask, moveTask, scheduleTask, addNextActionLabel, claimTaskDecision],
   )
 
   const handleInboxMoveToSomeday = useCallback(() => {
-    if (!currentTask || !prefs.somedayProjectId) return
+    if (!currentTask || !prefs.somedayProjectId || !claimTaskDecision(currentTask.id)) return
     moveTask.mutate({ taskId: currentTask.id, projectId: prefs.somedayProjectId })
-    dispatch({ type: 'INBOX_ACTION', action: 'move_to_someday' })
-  }, [currentTask, prefs.somedayProjectId, moveTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'move_to_someday' })
+  }, [currentTask, prefs.somedayProjectId, moveTask, claimTaskDecision])
 
   const handleInboxComplete = useCallback(() => {
-    if (!currentTask) return
+    if (!currentTask || !claimTaskDecision(currentTask.id)) return
     completeTask.mutate(currentTask.id)
-    dispatch({ type: 'INBOX_ACTION', action: 'complete' })
-  }, [currentTask, completeTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'complete' })
+  }, [currentTask, completeTask, claimTaskDecision])
 
   const handleInboxDelete = useCallback(() => {
-    if (!currentTask) return
+    if (!currentTask || !claimTaskDecision(currentTask.id)) return
     deleteTask.mutate(currentTask.id)
-    dispatch({ type: 'INBOX_ACTION', action: 'delete' })
-  }, [currentTask, deleteTask])
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'delete' })
+  }, [currentTask, deleteTask, claimTaskDecision])
 
   const handleInboxSkip = useCallback(() => {
-    dispatch({ type: 'INBOX_ACTION', action: 'skip' })
-  }, [])
+    if (!currentTask || !claimTaskDecision(currentTask.id)) return
+    dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'skip' })
+  }, [currentTask, claimTaskDecision])
 
   const handleFilterSchedule = useCallback(
     (dueString: string) => {
-      if (!currentTask || !canChangeTaskDueDate(currentTask)) return
+      if (!currentTask || !canChangeTaskDueDate(currentTask) || !claimTaskDecision(currentTask.id)) return
       if (dueString === 'no date') {
         scheduleTask.mutate({ taskId: currentTask.id, dueString: null })
-        dispatch({ type: 'FILTER_ACTION', action: 'remove_date' })
+        dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'remove_date' })
       } else {
         scheduleTask.mutate({ taskId: currentTask.id, dueString })
-        dispatch({ type: 'FILTER_ACTION', action: 'schedule', dueString })
+        dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'schedule', dueString })
       }
     },
-    [currentTask, scheduleTask],
+    [currentTask, scheduleTask, claimTaskDecision],
   )
 
   const handleFilterComplete = useCallback(() => {
-    if (!currentTask) return
+    if (!currentTask || !claimTaskDecision(currentTask.id)) return
     completeTask.mutate(currentTask.id)
-    dispatch({ type: 'FILTER_ACTION', action: 'complete' })
-  }, [currentTask, completeTask])
+    dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'complete' })
+  }, [currentTask, completeTask, claimTaskDecision])
 
   const handleFilterSkip = useCallback(() => {
-    dispatch({ type: 'FILTER_ACTION', action: 'skip' })
-  }, [])
+    if (!currentTask || !claimTaskDecision(currentTask.id)) return
+    dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'skip' })
+  }, [currentTask, claimTaskDecision])
 
   const handleStop = useCallback(() => {
     dispatch({ type: 'STOP' })
@@ -205,21 +223,6 @@ export function ReviewPage() {
         case 'm':
           // handled by InboxActionBar internally
           break
-        case '1':
-          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('today')
-          break
-        case '2':
-          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('tomorrow')
-          break
-        case '3':
-          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('saturday')
-          break
-        case '4':
-          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('monday')
-          break
-        case '0':
-          if (state.phase === 'filter' && canChangeDueDate) handleFilterSchedule('no date')
-          break
         case 'Escape':
           handleStop()
           break
@@ -231,7 +234,6 @@ export function ReviewPage() {
   }, [
     state.phase,
     canSkip,
-    canChangeDueDate,
     handleInboxComplete,
     handleInboxDelete,
     handleInboxSkip,
@@ -245,8 +247,8 @@ export function ReviewPage() {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <TodoistReadError
-          onRetry={() => void Promise.all([refetchProjects(), refetchInbox(), refetchFilter()])}
-          isRetrying={projectsFetching || inboxFetching || filterFetching}
+          onRetry={() => void Promise.all([refetchUser(), refetchProjects(), refetchInbox(), refetchFilter()])}
+          isRetrying={userFetching || projectsFetching || inboxFetching || filterFetching}
         />
       </div>
     )
@@ -292,7 +294,11 @@ export function ReviewPage() {
 
       {state.phase === 'inbox' ? (
         <InboxActionBar
+          key={currentTask.id}
           projects={projects}
+          task={currentTask}
+          todoistTimezone={user?.tzInfo.timezone ?? 'UTC'}
+          timeFormat={user?.timeFormat ?? 0}
           somedayProjectId={prefs.somedayProjectId}
           onMoveToProject={handleInboxMoveToProject}
           onMoveToSomeday={handleInboxMoveToSomeday}

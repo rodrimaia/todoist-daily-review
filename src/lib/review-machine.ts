@@ -1,4 +1,5 @@
 import type { Task } from '@doist/todoist-sdk'
+import { canSkipTask } from './task-decisions'
 
 export type Phase = 'inbox' | 'filter' | 'summary'
 
@@ -41,8 +42,8 @@ export interface ReviewState {
 
 export type ReviewAction =
   | { type: 'START'; inboxTasks: Task[]; filterTasks: Task[] }
-  | { type: 'INBOX_ACTION'; action: InboxDecisionType }
-  | { type: 'FILTER_ACTION'; action: FilterDecisionType; dueString?: string }
+  | { type: 'INBOX_ACTION'; taskId: string; action: InboxDecisionType }
+  | { type: 'FILTER_ACTION'; taskId: string; action: FilterDecisionType; dueString?: string }
   | { type: 'STOP' }
 
 function emptyInboxStats(): InboxStats {
@@ -104,6 +105,9 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
     }
 
     case 'INBOX_ACTION': {
+      const currentTask = state.inboxTasks[state.currentIndex]
+      if (currentTask?.id !== action.taskId) return state
+      if (action.action === 'skip' && !canSkipTask(currentTask)) return state
       const stats = { ...state.inboxStats }
       switch (action.action) {
         case 'move_to_project': stats.moved++; break
@@ -112,7 +116,6 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
         case 'delete': stats.deleted++; break
         case 'skip': stats.skipped++; break
       }
-      const currentTask = state.inboxTasks[state.currentIndex]
       const processedInboxTaskIds = new Set(state.processedInboxTaskIds)
       if (action.action !== 'skip' && currentTask) {
         processedInboxTaskIds.add(currentTask.id)
@@ -121,6 +124,9 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
     }
 
     case 'FILTER_ACTION': {
+      const currentTask = state.filterTasks[state.currentIndex]
+      if (currentTask?.id !== action.taskId) return state
+      if (action.action === 'skip' && !canSkipTask(currentTask)) return state
       const stats = { ...state.filterStats }
       switch (action.action) {
         case 'schedule': {

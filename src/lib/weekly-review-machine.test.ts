@@ -33,6 +33,7 @@ describe('weekly review reducer', () => {
 
     state = weeklyReviewReducer(state, {
       type: 'INBOX_ACTION',
+      taskId: 'shared',
       action: 'move_to_project',
     })
     expect(state.phase).toBe('projects')
@@ -59,6 +60,7 @@ describe('weekly review reducer', () => {
 
   test('keeps a skipped Inbox task in Upcoming', () => {
     const shared = task('shared')
+    shared.due = { date: '2030-01-01', string: 'every day', isRecurring: true }
     let state = weeklyReviewReducer(weeklyInitialState, {
       type: 'START',
       inboxTasks: [shared],
@@ -67,7 +69,7 @@ describe('weekly review reducer', () => {
       upcomingTasks: [shared],
     })
 
-    state = weeklyReviewReducer(state, { type: 'INBOX_ACTION', action: 'skip' })
+    state = weeklyReviewReducer(state, { type: 'INBOX_ACTION', taskId: 'shared', action: 'skip' })
 
     expect(state.phase).toBe('upcoming')
     expect(state.upcomingTasks).toEqual([shared])

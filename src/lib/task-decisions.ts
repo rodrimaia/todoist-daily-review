@@ -4,3 +4,7 @@ import type { Task } from '@doist/todoist-sdk'
 export function canChangeTaskDueDate(task: Pick<Task, 'due'>): boolean {
   return task.due?.isRecurring !== true
 }
+
+export function canSkipTask(task: Pick<Task, 'due'>): boolean {
+  return task.due?.isRecurring === true
+}

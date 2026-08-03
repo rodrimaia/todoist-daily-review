@@ -1,5 +1,6 @@
 import type { Task, PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import type { InboxStats } from './review-machine'
+import { canSkipTask } from './task-decisions'
 
 export type WeeklyPhase = 'inbox' | 'projects' | 'someday' | 'upcoming' | 'summary'
 
@@ -51,7 +52,7 @@ export type WeeklyReviewAction =
       somedayTasks: Task[]
       upcomingTasks: Task[]
     }
-  | { type: 'INBOX_ACTION'; action: InboxActionType }
+  | { type: 'INBOX_ACTION'; taskId: string; action: InboxActionType }
   | { type: 'PROJECT_ACTION'; action: ProjectActionType }
   | { type: 'SOMEDAY_DONE'; stats: SomedayStats }
   | { type: 'UPCOMING_DONE'; stats: UpcomingStats }
@@ -153,6 +154,9 @@ export function weeklyReviewReducer(
     }
 
     case 'INBOX_ACTION': {
+      const currentTask = state.inboxTasks[state.inboxIndex]
+      if (currentTask?.id !== action.taskId) return state
+      if (action.action === 'skip' && !canSkipTask(currentTask)) return state
       const stats = { ...state.inboxStats }
       switch (action.action) {
         case 'move_to_project': stats.moved++; break
@@ -162,7 +166,6 @@ export function weeklyReviewReducer(
         case 'skip': stats.skipped++; break
       }
       const processedTaskIds = new Set(state.processedTaskIds)
-      const currentTask = state.inboxTasks[state.inboxIndex]
       if (action.action !== 'skip' && currentTask) {
         processedTaskIds.add(currentTask.id)
       }

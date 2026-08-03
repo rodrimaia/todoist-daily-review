@@ -20,7 +20,7 @@ export function FilterActionBar({
   return (
     <div className="w-full max-w-md space-y-3">
       {canChangeDueDate ? (
-        <DatePicker onSelect={onSchedule} />
+        <DatePicker onSelect={(option) => onSchedule(option.value)} />
       ) : (
         <p className="text-xs text-muted-foreground flex items-center gap-1.5">
           <Repeat className="h-3 w-3" />

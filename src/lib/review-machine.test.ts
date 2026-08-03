@@ -21,7 +21,7 @@ describe('daily review reducer', () => {
       filterTasks: [shared, filterOnly],
     })
 
-    state = reviewReducer(state, { type: 'INBOX_ACTION', action: 'move_to_project' })
+    state = reviewReducer(state, { type: 'INBOX_ACTION', taskId: 'shared', action: 'move_to_project' })
 
     expect(state.phase).toBe('filter')
     expect(state.filterTasks).toEqual([filterOnly])
@@ -32,13 +32,14 @@ describe('daily review reducer', () => {
 
   test('keeps a skipped Inbox task eligible for Filter review', () => {
     const shared = task('shared')
+    shared.due = { date: '2030-01-01', string: 'every day', isRecurring: true }
     let state = reviewReducer(initialState, {
       type: 'START',
       inboxTasks: [shared],
       filterTasks: [shared],
     })
 
-    state = reviewReducer(state, { type: 'INBOX_ACTION', action: 'skip' })
+    state = reviewReducer(state, { type: 'INBOX_ACTION', taskId: 'shared', action: 'skip' })
 
     expect(state.phase).toBe('filter')
     expect(state.filterTasks).toEqual([shared])
@@ -54,13 +55,14 @@ describe('daily review reducer', () => {
 
     state = reviewReducer(state, {
       type: 'FILTER_ACTION',
+      taskId: 'one',
       action: 'schedule',
       dueString: 'today',
     })
     expect(state.currentIndex).toBe(1)
     expect(state.filterStats.rescheduledToday).toBe(1)
 
-    state = reviewReducer(state, { type: 'FILTER_ACTION', action: 'remove_date' })
+    state = reviewReducer(state, { type: 'FILTER_ACTION', taskId: 'two', action: 'remove_date' })
     expect(state.phase).toBe('summary')
     expect(state.filterStats.removedDate).toBe(1)
   })

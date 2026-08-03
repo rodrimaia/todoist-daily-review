@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
+import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { Button } from '~/components/ui/button'
-import { DatePicker } from './DatePicker'
+import { DatePicker, getInboxDateOptions, type DateOption } from './DatePicker'
+import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import { ProjectPicker } from './ProjectPicker'
 import { Input } from '~/components/ui/input'
 import {
@@ -19,6 +20,9 @@ type Step = 'pick-project' | 'pick-date' | 'new-project'
 
 export function InboxActionBar({
   projects,
+  task,
+  todoistTimezone,
+  timeFormat,
   somedayProjectId,
   onMoveToProject: onMove,
   onMoveToSomeday: onSomeday,
@@ -30,6 +34,9 @@ export function InboxActionBar({
   canSkip = true,
 }: {
   projects: Project[]
+  task: Task
+  todoistTimezone: string
+  timeFormat: number
   somedayProjectId: string | null
   onMoveToProject: (projectId: string, dueString?: string) => void
   onMoveToSomeday: () => void
@@ -46,12 +53,22 @@ export function InboxActionBar({
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleProjectSelect(project: Project) {
+    if (!canChangeTaskDueDate(task)) {
+      onMove(project.id)
+      resetStep()
+      return
+    }
     setSelectedProjectId(project.id)
     setStep('pick-date')
   }
 
   async function handleCreateNew(name: string) {
     const project = await onCreateProject(name)
+    if (!canChangeTaskDueDate(task)) {
+      onMove(project.id)
+      resetStep()
+      return
+    }
     setSelectedProjectId(project.id)
     setStep('pick-date')
   }
@@ -71,13 +88,26 @@ export function InboxActionBar({
     const name = projectName.trim()
     if (!name) return
     const project = await onCreateProject(name)
+    if (!canChangeTaskDueDate(task)) {
+      onMove(project.id)
+      resetStep()
+      return
+    }
     setSelectedProjectId(project.id)
     setStep('pick-date')
   }
 
-  function handleDateAfterMove(dueString: string) {
+  function handleDateAfterMove(option: DateOption) {
     if (selectedProjectId) {
-      onMove(selectedProjectId, dueString === 'no date' ? undefined : dueString)
+      switch (option.decision) {
+        case 'keep_date':
+        case 'no_date':
+          onMove(selectedProjectId)
+          break
+        case 'remove_date':
+        case 'schedule':
+          onMove(selectedProjectId, option.value)
+      }
     }
     resetStep()
   }
@@ -92,7 +122,10 @@ export function InboxActionBar({
     return (
       <div className="w-full max-w-md space-y-2">
         <p className="text-sm text-muted-foreground">Schedule:</p>
-        <DatePicker onSelect={handleDateAfterMove} />
+        <DatePicker
+          options={getInboxDateOptions(task.due, todoistTimezone, timeFormat)}
+          onSelect={handleDateAfterMove}
+        />
       </div>
     )
   }

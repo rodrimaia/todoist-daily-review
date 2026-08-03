@@ -10,10 +10,10 @@ Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing
 
 - **Daily Review** -- process your inbox and review next actions, one task at a time
 - **Weekly Review** -- review all active projects, someday/maybe list, and upcoming tasks
-- **Inbox processing** -- move to a project (optionally with a date), complete, delete, or defer to someday
+- **Inbox processing** -- move to a project while keeping, changing, or removing its date; complete, delete, or defer to someday
 - **Project review** -- check each project for next actions, add or delete projects
 - **Upcoming review** -- reschedule, complete, or remove dates from upcoming tasks while preserving recurring schedules
-- **Keyboard shortcuts** -- `1`-`4` quick dates, `c` complete, `d` delete, `s` skip recurring Daily Review tasks, `m` move
+- **Keyboard shortcuts** -- during date selection, `k` keeps the current date, `0` removes it, and `1`-`4` choose quick dates; `c` completes, `d` deletes, and `s` skips recurring tasks
 - **Progress tracking** -- see how far along you are in each review phase
 - **Summary stats** -- breakdown of all actions taken at the end of each review
 
@@ -23,7 +23,7 @@ Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing
 
 **Weekly Review** flows through five phases: **Inbox** (clear remaining inbox), **Projects** (review each active project for next actions), **Someday** (review your someday/maybe list), **Upcoming** (review all scheduled tasks grouped by day), and **Summary**.
 
-During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Successful changes refresh the in-memory Todoist cache without delaying review advancement. Read failures remain visible with a retry option, and replacing or clearing the API token clears cached account data.
+During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Changes advance the review optimistically and refresh the in-memory Todoist cache after success. Write failures remain visible for verification in Todoist. Read failures remain visible with a retry option, and replacing or clearing the API token clears cached account data.
 
 ## Setup
 

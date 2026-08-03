@@ -3,6 +3,7 @@ const tasks = [...todoist, 'tasks'] as const
 
 export const queryKeys = {
   todoist,
+  user: [...todoist, 'user'] as const,
   projects: [...todoist, 'projects'] as const,
   tasks,
   inboxTasks: [...tasks, 'inbox'] as const,
