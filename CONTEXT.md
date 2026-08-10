@@ -26,6 +26,9 @@ _Avoid_: Browser day, local day
 The outcome chosen for the current task before advancing to the next task.
 _Avoid_: Action
 
+**Delete**:
+A task decision that permanently removes the current non-recurring task from Todoist. Recurring tasks are not eligible during a Daily Review.
+
 **Skip**:
 A task decision that leaves the current recurring task unchanged and advances to the next task. Non-recurring tasks are not eligible.
 
