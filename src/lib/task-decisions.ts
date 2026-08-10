@@ -9,6 +9,10 @@ export function canSkipTask(task: Pick<Task, 'due'>): boolean {
   return task.due?.isRecurring === true
 }
 
+export function canDeleteTask(task: Pick<Task, 'due'>): boolean {
+  return task.due?.isRecurring !== true
+}
+
 /**
  * An Eligible tracking occurrence is an open task whose due date is on or before
  * the Review day (calendar date in the Todoist account timezone).

@@ -6,6 +6,14 @@ import { canChangeTaskDueDate } from '~/lib/task-decisions'
 import { ProjectPicker } from './ProjectPicker'
 import { Input } from '~/components/ui/input'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
+import {
   Lightbulb,
   Check,
   Trash2,
@@ -32,6 +40,7 @@ export function InboxActionBar({
   onStop,
   onCreateProject,
   canSkip = true,
+  canDelete = true,
 }: {
   projects: Project[]
   task: Task
@@ -46,8 +55,10 @@ export function InboxActionBar({
   onStop: () => void
   onCreateProject: (name: string) => Promise<Project>
   canSkip?: boolean
+  canDelete?: boolean
 }) {
   const [step, setStep] = useState<Step>('pick-project')
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [projectName, setProjectName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -186,11 +197,43 @@ export function InboxActionBar({
           Done
           <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">c</kbd>
         </Button>
-        <Button variant="outline" size="sm" onClick={onDelete} className="gap-1.5 text-destructive">
-          <Trash2 className="h-3.5 w-3.5" />
-          Delete
-          <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">d</kbd>
-        </Button>
+        {canDelete && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDeleteOpen(true)}
+              className="gap-1.5 text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </Button>
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+              <DialogContent showCloseButton={false}>
+                <DialogHeader>
+                  <DialogTitle>Delete task</DialogTitle>
+                  <DialogDescription>
+                    This permanently deletes <span className="font-medium text-foreground">{task.content}</span> from Todoist. This cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setConfirmDeleteOpen(false)
+                      onDelete()
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
         {canSkip && (
           <Button variant="ghost" size="sm" onClick={onSkip} className="gap-1.5 text-muted-foreground">
             <SkipForward className="h-3.5 w-3.5" />

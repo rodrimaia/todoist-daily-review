@@ -1,5 +1,5 @@
 import type { Task } from '@doist/todoist-sdk'
-import { canSkipTask } from './task-decisions'
+import { canDeleteTask, canSkipTask } from './task-decisions'
 
 export type Phase = 'inbox' | 'filter' | 'summary'
 
@@ -10,7 +10,7 @@ export type InboxDecisionType =
   | 'delete'
   | 'skip'
 
-export type FilterDecisionType = 'schedule' | 'remove_date' | 'complete' | 'skip'
+export type FilterDecisionType = 'schedule' | 'remove_date' | 'complete' | 'skip' | 'delete'
 
 export interface InboxStats {
   moved: number
@@ -27,6 +27,7 @@ export interface FilterStats {
   rescheduledMonday: number
   removedDate: number
   completed: number
+  deleted: number
   skipped: number
 }
 
@@ -58,6 +59,7 @@ function emptyFilterStats(): FilterStats {
     rescheduledMonday: 0,
     removedDate: 0,
     completed: 0,
+    deleted: 0,
     skipped: 0,
   }
 }
@@ -127,6 +129,7 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
       const currentTask = state.filterTasks[state.currentIndex]
       if (currentTask?.id !== action.taskId) return state
       if (action.action === 'skip' && !canSkipTask(currentTask)) return state
+      if (action.action === 'delete' && !canDeleteTask(currentTask)) return state
       const stats = { ...state.filterStats }
       switch (action.action) {
         case 'schedule': {
@@ -138,6 +141,7 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
         }
         case 'remove_date': stats.removedDate++; break
         case 'complete': stats.completed++; break
+        case 'delete': stats.deleted++; break
         case 'skip': stats.skipped++; break
       }
       return advanceOrTransition({ ...state, filterStats: stats })
@@ -172,6 +176,7 @@ export function getFilterTotal(stats: FilterStats): number {
     stats.rescheduledMonday +
     stats.removedDate +
     stats.completed +
+    stats.deleted +
     stats.skipped
   )
 }

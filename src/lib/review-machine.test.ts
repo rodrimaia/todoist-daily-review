@@ -2,13 +2,14 @@ import { describe, expect, test } from 'bun:test'
 import type { Task } from '@doist/todoist-sdk'
 import {
   getCurrentTask,
+  getFilterTotal,
   getInboxTotal,
   initialState,
   reviewReducer,
 } from './review-machine'
 
-function task(id: string): Task {
-  return { id } as Task
+function task(id: string, recurring = false): Task {
+  return { id, due: recurring ? { isRecurring: true, date: '2030-01-01', string: 'every day' } : undefined } as Task
 }
 
 describe('daily review reducer', () => {
@@ -65,6 +66,43 @@ describe('daily review reducer', () => {
     state = reviewReducer(state, { type: 'FILTER_ACTION', taskId: 'two', action: 'remove_date' })
     expect(state.phase).toBe('summary')
     expect(state.filterStats.removedDate).toBe(1)
+  })
+
+  test('records filter Delete and counts it in the filter total', () => {
+    let state = reviewReducer(initialState, {
+      type: 'START',
+      inboxTasks: [],
+      filterTasks: [task('del-me'), task('next')],
+    })
+
+    state = reviewReducer(state, {
+      type: 'FILTER_ACTION',
+      taskId: 'del-me',
+      action: 'delete',
+    })
+
+    expect(state.filterStats.deleted).toBe(1)
+    expect(getFilterTotal(state.filterStats)).toBe(1)
+    expect(state.currentIndex).toBe(1)
+    expect(getCurrentTask(state)?.id).toBe('next')
+  })
+
+  test('rejects filter Delete for a recurring task', () => {
+    let state = reviewReducer(initialState, {
+      type: 'START',
+      inboxTasks: [],
+      filterTasks: [task('recurring', true)],
+    })
+
+    state = reviewReducer(state, {
+      type: 'FILTER_ACTION',
+      taskId: 'recurring',
+      action: 'delete',
+    })
+
+    expect(state.filterStats.deleted).toBe(0)
+    expect(state.phase).toBe('filter')
+    expect(state.currentIndex).toBe(0)
   })
 
   test('starts at the first reachable phase and Stop ends the session', () => {
