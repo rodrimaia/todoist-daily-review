@@ -26,6 +26,7 @@ export function SettingsPage() {
   const [filter, setFilter] = useState(() => getPreferences().filterQuery)
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')
   const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
+  const [reviewTrackingTaskId, setReviewTrackingTaskId] = useState(() => getPreferences().reviewTrackingTaskId ?? '')
   const [saved, setSaved] = useState(false)
   const currentAppearance = useAppearance()
   const queryClient = useQueryClient()
@@ -57,6 +58,7 @@ export function SettingsPage() {
       filterQuery: filter,
       somedayProjectId: somedayId || null,
       excludeProjectPrefixes: excludePrefixes,
+      reviewTrackingTaskId: reviewTrackingTaskId.trim() || null,
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -160,6 +162,21 @@ export function SettingsPage() {
               />
               <p className="text-xs text-muted-foreground">
                 Comma-separated prefixes. Projects starting with these are skipped during weekly review.
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Review tracking task ID</label>
+              <Input
+                value={reviewTrackingTaskId}
+                onChange={(e) => setReviewTrackingTaskId(e.target.value)}
+                placeholder="Task ID (optional)"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional Todoist task ID for a recurring Weekly Review reminder.
+                The task is completed automatically when you finish a Weekly Review.
               </p>
             </div>
 

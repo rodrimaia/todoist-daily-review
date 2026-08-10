@@ -10,6 +10,7 @@ export interface Preferences {
   somedayProjectId: string | null
   excludeProjectPrefixes: string
   appearance: Appearance
+  reviewTrackingTaskId: string | null
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -17,6 +18,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   somedayProjectId: null,
   excludeProjectPrefixes: '',
   appearance: 'system',
+  reviewTrackingTaskId: null,
 }
 
 function isValidAppearance(value: unknown): value is Appearance {

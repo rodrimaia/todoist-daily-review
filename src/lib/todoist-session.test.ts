@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { QueryClient } from '@tanstack/react-query'
 import { queryKeys } from './query-keys'
-import { getToken, setToken } from './storage'
+import { getToken, getPreferences, setToken, setPreferences } from './storage'
 import { replaceTodoistToken } from './todoist-session'
 
 function memoryStorage(): Storage {
@@ -55,5 +55,25 @@ describe('Todoist identity changes', () => {
 
     expect(getToken()).toBeNull()
     expect(queryClient.getQueryData(queryKeys.inboxTasks)).toBeUndefined()
+  })
+
+  test('replacing the token clears the Review tracking task ID', async () => {
+    const queryClient = new QueryClient()
+    setToken('old-secret')
+    setPreferences({ reviewTrackingTaskId: '12345' })
+
+    await replaceTodoistToken(queryClient, 'new-secret')
+
+    expect(getPreferences().reviewTrackingTaskId).toBeNull()
+  })
+
+  test('clearing the token clears the Review tracking task ID', async () => {
+    const queryClient = new QueryClient()
+    setToken('secret')
+    setPreferences({ reviewTrackingTaskId: '12345' })
+
+    await replaceTodoistToken(queryClient, null)
+
+    expect(getPreferences().reviewTrackingTaskId).toBeNull()
   })
 })

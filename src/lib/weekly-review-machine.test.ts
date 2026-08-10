@@ -97,4 +97,85 @@ describe('weekly review reducer', () => {
       }).phase,
     ).toBe('summary')
   })
+
+  describe('completedNaturally', () => {
+    test('full run through every phase is naturally completed', () => {
+      let state = weeklyReviewReducer(weeklyInitialState, {
+        type: 'START',
+        inboxTasks: [task('a')],
+        projects: [project('p')],
+        somedayTasks: [task('s')],
+        upcomingTasks: [task('u')],
+      })
+
+      state = weeklyReviewReducer(state, { type: 'INBOX_ACTION', taskId: 'a', action: 'complete' })
+      state = weeklyReviewReducer(state, { type: 'PROJECT_ACTION', action: 'ok' })
+      state = weeklyReviewReducer(state, {
+        type: 'SOMEDAY_DONE',
+        stats: { activated: 1, kept: 0, deleted: 0 },
+      })
+      state = weeklyReviewReducer(state, {
+        type: 'UPCOMING_DONE',
+        stats: { rescheduled: 1, completed: 1, removedDate: 0 },
+      })
+
+      expect(state.phase).toBe('summary')
+      expect(state.completedNaturally).toBe(true)
+    })
+
+    test('empty review is naturally completed', () => {
+      const state = weeklyReviewReducer(weeklyInitialState, {
+        type: 'START',
+        inboxTasks: [],
+        projects: [],
+        somedayTasks: [],
+        upcomingTasks: [],
+      })
+
+      expect(state.phase).toBe('summary')
+      expect(state.completedNaturally).toBe(true)
+    })
+
+    test('STOP marks the review as not naturally completed', () => {
+      let state = weeklyReviewReducer(weeklyInitialState, {
+        type: 'START',
+        inboxTasks: [task('a')],
+        projects: [],
+        somedayTasks: [],
+        upcomingTasks: [],
+      })
+
+      state = weeklyReviewReducer(state, { type: 'STOP' })
+
+      expect(state.phase).toBe('summary')
+      expect(state.completedNaturally).toBe(false)
+    })
+
+    test('STOP overrides natural completion even when all phases were walked', () => {
+      let state = weeklyReviewReducer(weeklyInitialState, {
+        type: 'START',
+        inboxTasks: [task('a')],
+        projects: [],
+        somedayTasks: [],
+        upcomingTasks: [],
+      })
+
+      // Walk through inbox (natural advance makes completedNaturally = true)
+      state = weeklyReviewReducer(state, { type: 'INBOX_ACTION', taskId: 'a', action: 'complete' })
+      expect(state.phase).toBe('summary')
+      expect(state.completedNaturally).toBe(true)
+
+      // If the user had STOPped during inbox instead:
+      let stopped = weeklyReviewReducer(weeklyInitialState, {
+        type: 'START',
+        inboxTasks: [task('a')],
+        projects: [],
+        somedayTasks: [],
+        upcomingTasks: [],
+      })
+      stopped = weeklyReviewReducer(stopped, { type: 'STOP' })
+      expect(stopped.phase).toBe('summary')
+      expect(stopped.completedNaturally).toBe(false)
+    })
+  })
 })
