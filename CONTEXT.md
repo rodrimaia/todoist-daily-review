@@ -7,6 +7,17 @@ This context describes the language used to process Todoist tasks through guided
 **Daily Review**:
 A guided session that processes Inbox tasks followed by tasks selected by the configured filter.
 
+**Weekly Review**:
+A guided session that processes every weekly review phase. Stopping early does not complete the Weekly Review.
+
+**Review tracking task**:
+A configured recurring task that records completion of a Weekly Review. It does not participate in the Weekly Review, and a completed review never advances a future occurrence.
+_Avoid_: Weekly review task, reminder task
+
+**Eligible tracking occurrence**:
+An open occurrence of the Review tracking task due on or before the Review day. An undated or future occurrence is not eligible.
+_Avoid_: Pending tracking task
+
 **Review day**:
 The calendar day in the Todoist account timezone used to resolve relative scheduling choices.
 _Avoid_: Browser day, local day
