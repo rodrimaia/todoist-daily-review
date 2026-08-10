@@ -5,7 +5,7 @@ import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
-import { canChangeTaskDueDate, canSkipTask } from '~/lib/task-decisions'
+import { canChangeTaskDueDate, canSkipTask, isEligibleTrackingOccurrence } from '~/lib/task-decisions'
 import {
   weeklyReviewReducer,
   weeklyInitialState,
@@ -40,8 +40,10 @@ type Project = PersonalProject | WorkspaceProject
 export function WeeklyReviewPage() {
   const navigate = useNavigate()
   const prefs = getPreferences()
+  const reviewTrackingTaskId = prefs.reviewTrackingTaskId
   const [state, dispatch] = useReducer(weeklyReviewReducer, weeklyInitialState)
   const [started, setStarted] = useState(false)
+  const [isTracking, setIsTracking] = useState(false)
 
   const {
     data: user,
@@ -146,18 +148,27 @@ export function WeeklyReviewPage() {
 
   useEffect(() => {
     if (!isLoading && !isReadError && !started && inboxData && allTasksData) {
-      const inboxTasks = inboxData.results ?? []
-      const upcomingTasks = upcomingData?.results ?? []
+      const excludeTaskId = reviewTrackingTaskId
+
+      const inboxTasks = (inboxData.results ?? []).filter(
+        (t) => !excludeTaskId || t.id !== excludeTaskId,
+      )
+      const upcomingTasks = (upcomingData?.results ?? []).filter(
+        (t) => !excludeTaskId || t.id !== excludeTaskId,
+      )
 
       // Group all tasks by projectId
       const tasksByProject = new Map<string, Task[]>()
       for (const task of allTasksData) {
+        if (excludeTaskId && task.id === excludeTaskId) continue
         const list = tasksByProject.get(task.projectId) ?? []
         list.push(task)
         tasksByProject.set(task.projectId, list)
       }
 
-      // Build project review list from reviewable projects
+      // Build project review list from reviewable projects.
+      // Exclude the tracking task from each project's task list before
+      // calculating hasNextAction.
       const projectsWithTasks: ProjectWithTasks[] = reviewableProjects.map((project) => {
         const tasks = tasksByProject.get(project.id) ?? []
         const hasNextAction = tasks.some((t) => t.labels.includes('next_action'))
@@ -166,7 +177,9 @@ export function WeeklyReviewPage() {
 
       // Someday tasks from the someday project
       const somedayTasks = somedayProjectId
-        ? tasksByProject.get(somedayProjectId) ?? []
+        ? (tasksByProject.get(somedayProjectId) ?? []).filter(
+            (t) => !excludeTaskId || t.id !== excludeTaskId,
+          )
         : []
 
       dispatch({
@@ -409,6 +422,34 @@ export function WeeklyReviewPage() {
   }
 
   if (state.phase === 'summary') {
+    const trackingTaskId = reviewTrackingTaskId
+    const reviewDay = user
+      ? new Date().toLocaleDateString('en-CA', { timeZone: user.tzInfo.timezone })
+      : new Date().toISOString().slice(0, 10)
+
+    const handleDone = async () => {
+      if (!state.completedNaturally || !trackingTaskId) {
+        navigate({ to: '/' })
+        return
+      }
+
+      setIsTracking(true)
+      try {
+        const api = getTodoistApi()
+        const task = await api.getTask(trackingTaskId)
+
+        if (isEligibleTrackingOccurrence(task, reviewDay)) {
+          await api.closeTask(trackingTaskId)
+        }
+      } catch {
+        // Technical failure: surface it but continue.
+        // The existing mutations already show write errors globally.
+      } finally {
+        setIsTracking(false)
+        navigate({ to: '/' })
+      }
+    }
+
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <WeeklyReviewSummary
@@ -416,7 +457,8 @@ export function WeeklyReviewPage() {
           projectStats={state.projectStats}
           somedayStats={state.somedayStats}
           upcomingStats={state.upcomingStats}
-          onDone={() => navigate({ to: '/' })}
+          onDone={handleDone}
+          isProcessing={isTracking}
         />
       </div>
     )

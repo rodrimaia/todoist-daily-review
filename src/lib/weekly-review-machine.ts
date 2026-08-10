@@ -42,6 +42,8 @@ export interface WeeklyReviewState {
   // Upcoming
   upcomingTasks: Task[]
   upcomingStats: UpcomingStats
+  // Tracking
+  completedNaturally: boolean
 }
 
 export type WeeklyReviewAction =
@@ -101,6 +103,7 @@ export const weeklyInitialState: WeeklyReviewState = {
   somedayStats: emptySomedayStats(),
   upcomingTasks: [],
   upcomingStats: emptyUpcomingStats(),
+  completedNaturally: true,
 }
 
 const PHASE_ORDER: WeeklyPhase[] = ['inbox', 'projects', 'someday', 'upcoming', 'summary']
@@ -192,7 +195,7 @@ export function weeklyReviewReducer(
     }
 
     case 'STOP':
-      return { ...state, phase: 'summary' }
+      return { ...state, phase: 'summary', completedNaturally: false }
 
     default:
       return state

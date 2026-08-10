@@ -45,12 +45,14 @@ export function WeeklyReviewSummary({
   somedayStats,
   upcomingStats,
   onDone,
+  isProcessing = false,
 }: {
   inboxStats: InboxStats
   projectStats: ProjectStats
   somedayStats: SomedayStats
   upcomingStats: UpcomingStats
   onDone: () => void
+  isProcessing?: boolean
 }) {
   const inboxTotal = getInboxTotal(inboxStats)
   const projectTotal = getProjectStatsTotal(projectStats)
@@ -121,8 +123,8 @@ export function WeeklyReviewSummary({
           <p className="text-sm text-muted-foreground">Nothing to review this week.</p>
         )}
 
-        <Button onClick={onDone} className="w-full mt-4">
-          Done
+        <Button onClick={onDone} disabled={isProcessing} className="w-full mt-4">
+          {isProcessing ? 'Completing…' : 'Done'}
         </Button>
       </CardContent>
     </Card>
