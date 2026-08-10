@@ -83,6 +83,7 @@ export function ReviewSummary({
                 <StatRow icon={CalendarRange} label="Monday" count={filterStats.rescheduledMonday} />
                 <StatRow icon={CalendarOff} label="Removed date" count={filterStats.removedDate} />
                 <StatRow icon={Check} label="Completed" count={filterStats.completed} />
+                <StatRow icon={Trash2} label="Deleted" count={filterStats.deleted} />
                 <StatRow icon={SkipForward} label="Skipped" count={filterStats.skipped} />
               </div>
             </div>

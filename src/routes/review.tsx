@@ -5,7 +5,7 @@ import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
-import { canChangeTaskDueDate, canSkipTask } from '~/lib/task-decisions'
+import { canChangeTaskDueDate, canDeleteTask, canSkipTask } from '~/lib/task-decisions'
 import {
   reviewReducer,
   initialState,
@@ -110,6 +110,7 @@ export function ReviewPage() {
   const currentTask = getCurrentTask(state)
   const canSkip = currentTask ? canSkipTask(currentTask) : false
   const canChangeDueDate = currentTask ? canChangeTaskDueDate(currentTask) : false
+  const canDelete = currentTask ? canDeleteTask(currentTask) : false
   const claimedDecisions = useRef(new Set<string>())
   const claimTaskDecision = useCallback((taskId: string) => {
     const key = `${state.phase}:${taskId}`
@@ -153,7 +154,7 @@ export function ReviewPage() {
   }, [currentTask, completeTask, claimTaskDecision])
 
   const handleInboxDelete = useCallback(() => {
-    if (!currentTask || !claimTaskDecision(currentTask.id)) return
+    if (!currentTask || !canDeleteTask(currentTask) || !claimTaskDecision(currentTask.id)) return
     deleteTask.mutate(currentTask.id)
     dispatch({ type: 'INBOX_ACTION', taskId: currentTask.id, action: 'delete' })
   }, [currentTask, deleteTask, claimTaskDecision])
@@ -188,6 +189,12 @@ export function ReviewPage() {
     dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'skip' })
   }, [currentTask, claimTaskDecision])
 
+  const handleFilterDelete = useCallback(() => {
+    if (!currentTask || !canDeleteTask(currentTask) || !claimTaskDecision(currentTask.id)) return
+    deleteTask.mutate(currentTask.id)
+    dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'delete' })
+  }, [currentTask, deleteTask, claimTaskDecision])
+
   const handleStop = useCallback(() => {
     dispatch({ type: 'STOP' })
   }, [])
@@ -212,9 +219,6 @@ export function ReviewPage() {
           if (state.phase === 'inbox') handleInboxComplete()
           else handleFilterComplete()
           break
-        case 'd':
-          if (state.phase === 'inbox') handleInboxDelete()
-          break
         case 's':
           if (!canSkip) break
           if (state.phase === 'inbox') handleInboxSkip()
@@ -235,7 +239,6 @@ export function ReviewPage() {
     state.phase,
     canSkip,
     handleInboxComplete,
-    handleInboxDelete,
     handleInboxSkip,
     handleFilterComplete,
     handleFilterSkip,
@@ -308,6 +311,7 @@ export function ReviewPage() {
           onStop={handleStop}
           onCreateProject={handleCreateProject}
           canSkip={canSkip}
+          canDelete={canDelete}
         />
       ) : (
         <FilterActionBar
@@ -315,8 +319,11 @@ export function ReviewPage() {
           onComplete={handleFilterComplete}
           onSkip={handleFilterSkip}
           onStop={handleStop}
+          onDelete={handleFilterDelete}
           isRecurring={canSkip}
           canChangeDueDate={canChangeDueDate}
+          canDelete={canDelete}
+          taskContent={currentTask.content}
         />
       )}
     </div>
