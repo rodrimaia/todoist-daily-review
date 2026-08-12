@@ -1,9 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query'
 import {
   clearToken,
+  getToken,
   setPreferences,
   setToken,
   TODOIST_TOKEN_STORAGE_KEY,
+  type TodoistTokenPersistence,
 } from './storage'
 import { clearTodoistCache } from './todoist-cache'
 import { resetTodoistApi } from './todoist'
@@ -27,6 +29,18 @@ export function observeTodoistTokenChanges(
       return
     }
 
+    const temporaryToken = sessionStorage.getItem(TODOIST_TOKEN_STORAGE_KEY)
+    const previousToken = temporaryToken ?? event.oldValue
+
+    // Persistent changes are authoritative across tabs. Discarding this tab's
+    // temporary copy first prevents a stale session from masking the new value.
+    sessionStorage.removeItem(TODOIST_TOKEN_STORAGE_KEY)
+    const nextToken = localStorage.getItem(TODOIST_TOKEN_STORAGE_KEY)
+
+    if (event.key !== null && previousToken === nextToken) {
+      return
+    }
+
     // Clearing starts synchronously, before the routed UI can remount for the
     // token value that localStorage has already received from the other tab.
     void clearTodoistCache(queryClient)
@@ -39,14 +53,28 @@ export function observeTodoistTokenChanges(
   return () => window.removeEventListener('storage', handleStorage)
 }
 
+export function setTodoistTokenPersistence(
+  persistence: TodoistTokenPersistence,
+): void {
+  const token = getToken()
+  if (!token) throw new Error('No API token configured')
+  setToken(token, persistence)
+}
+
 export async function replaceTodoistToken(
   queryClient: QueryClient,
   token: string | null,
+  persistence: TodoistTokenPersistence = 'temporary',
 ): Promise<void> {
+  if (token && token === getToken()) {
+    setToken(token, persistence)
+    return
+  }
+
   await clearTodoistCache(queryClient)
   resetTodoistAccountPreferences()
   resetTodoistApi()
 
-  if (token) setToken(token)
+  if (token) setToken(token, persistence)
   else clearToken()
 }
