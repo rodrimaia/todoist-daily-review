@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { ApiTokenForm } from '~/components/ApiTokenForm'
+import { WelcomeIntro } from '~/components/WelcomeIntro'
 import { getToken } from '~/lib/storage'
 import { getTodoistApi } from '~/lib/todoist'
 import { queryKeys } from '~/lib/query-keys'
@@ -20,8 +21,11 @@ export function Home() {
 
   if (!hasToken) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-8">
+        <WelcomeIntro />
+
         <ApiTokenForm onSaved={handleTokenSaved} />
+
         <Link
           to="/settings"
           className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
@@ -122,6 +126,19 @@ function Dashboard() {
           <ListChecks className="h-4 w-4" />
           {isLoading ? '-' : filterCount} tasks
         </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground max-w-full">
+        <ListChecks className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate font-mono" title={prefs.filterQuery}>
+          {prefs.filterQuery}
+        </span>
+        <Link
+          to="/settings"
+          className="shrink-0 underline underline-offset-2 hover:text-foreground transition-colors"
+        >
+          edit filter
+        </Link>
       </div>
 
       <Link
