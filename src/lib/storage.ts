@@ -3,6 +3,8 @@ const STORAGE_KEYS = {
   preferences: 'todoist-review-preferences',
 } as const
 
+export const TODOIST_TOKEN_STORAGE_KEY = STORAGE_KEYS.token
+
 export type Appearance = 'system' | 'light' | 'dark'
 
 export interface Preferences {

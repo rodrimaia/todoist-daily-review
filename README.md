@@ -23,7 +23,7 @@ Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing
 
 **Weekly Review** flows through five phases: **Inbox** (clear remaining inbox), **Projects** (review each active project for next actions), **Someday** (review your someday/maybe list), **Upcoming** (review all scheduled tasks grouped by day), and **Summary**.
 
-During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Changes advance the review optimistically and refresh the in-memory Todoist cache after success. Write failures remain visible for verification in Todoist. Read failures remain visible with a retry option, and replacing or clearing the API token clears cached account data.
+During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Changes advance the review optimistically and refresh only the affected in-memory Todoist data after success. Write failures remain visible for verification in Todoist. Read failures remain visible with a retry option. Replacing or clearing the API token, including from another tab, discards cached account data and account-specific selections.
 
 ## Setup
 

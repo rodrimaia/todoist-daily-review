@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTodoistApi } from './todoist'
 import { invalidateTodoistCache } from './todoist-cache'
+import { queryKeys } from './query-keys'
 
-function useInvalidateTodoistCache() {
+function useInvalidateTodoistCache(queryKey: readonly unknown[]) {
   const queryClient = useQueryClient()
   return () => {
-    void invalidateTodoistCache(queryClient)
+    void invalidateTodoistCache(queryClient, queryKey)
   }
 }
 
 export function useMoveTask() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async ({
       taskId,
@@ -23,16 +24,21 @@ export function useMoveTask() {
     }) => {
       const api = getTodoistApi()
       await api.moveTask(taskId, { projectId })
+      // A move is already committed even if the follow-up label update fails.
+      invalidateTasks()
       if (labels) {
         await api.updateTask(taskId, { labels })
       }
     },
-    onSuccess: invalidateCache,
+    onSuccess: (_data, { labels }) => {
+      // Refresh again after a successful follow-up so the labels are current.
+      if (labels) invalidateTasks()
+    },
   })
 }
 
 export function useScheduleTask() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async ({
       taskId,
@@ -49,45 +55,45 @@ export function useScheduleTask() {
         ...(labels ? { labels } : {}),
       })
     },
-    onSuccess: invalidateCache,
+    onSuccess: invalidateTasks,
   })
 }
 
 export function useCompleteTask() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async (taskId: string) => {
       const api = getTodoistApi()
       await api.closeTask(taskId)
     },
-    onSuccess: invalidateCache,
+    onSuccess: invalidateTasks,
   })
 }
 
 export function useDeleteTask() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async (taskId: string) => {
       const api = getTodoistApi()
       await api.deleteTask(taskId)
     },
-    onSuccess: invalidateCache,
+    onSuccess: invalidateTasks,
   })
 }
 
 export function useCreateProject() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateProjects = useInvalidateTodoistCache(queryKeys.projects)
   return useMutation({
     mutationFn: async (name: string) => {
       const api = getTodoistApi()
       return api.addProject({ name })
     },
-    onSuccess: invalidateCache,
+    onSuccess: invalidateProjects,
   })
 }
 
 export function useAddTask() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async ({
       content,
@@ -108,17 +114,21 @@ export function useAddTask() {
         ...(dueString ? { dueString } : {}),
       })
     },
-    onSuccess: invalidateCache,
+    onSuccess: invalidateTasks,
   })
 }
 
 export function useDeleteProject() {
-  const invalidateCache = useInvalidateTodoistCache()
+  const invalidateProjects = useInvalidateTodoistCache(queryKeys.projects)
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
     mutationFn: async (projectId: string) => {
       const api = getTodoistApi()
       await api.deleteProject(projectId)
     },
-    onSuccess: invalidateCache,
+    onSuccess: () => {
+      invalidateProjects()
+      invalidateTasks()
+    },
   })
 }

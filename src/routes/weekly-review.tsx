@@ -439,7 +439,7 @@ export function WeeklyReviewPage() {
         const task = await api.getTask(trackingTaskId)
 
         if (isEligibleTrackingOccurrence(task, reviewDay)) {
-          await api.closeTask(trackingTaskId)
+          await completeTask.mutateAsync(trackingTaskId)
         }
       } catch {
         // Technical failure: surface it but continue.

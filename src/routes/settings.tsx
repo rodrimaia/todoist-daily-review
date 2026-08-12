@@ -51,14 +51,23 @@ export function SettingsPage() {
 
   async function handleSave() {
     const nextToken = token.trim()
-    if (nextToken && nextToken !== getToken()) {
+    const identityChanged = !!nextToken && nextToken !== getToken()
+    if (identityChanged) {
       await replaceTodoistToken(queryClient, nextToken)
+      const resetPreferences = getPreferences()
+      setTokenState(nextToken)
+      setSomedayId(resetPreferences.somedayProjectId ?? '')
+      setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
     }
     setPreferences({
       filterQuery: filter,
-      somedayProjectId: somedayId || null,
       excludeProjectPrefixes: excludePrefixes,
-      reviewTrackingTaskId: reviewTrackingTaskId.trim() || null,
+      ...(identityChanged
+        ? {}
+        : {
+            somedayProjectId: somedayId || null,
+            reviewTrackingTaskId: reviewTrackingTaskId.trim() || null,
+          }),
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -66,7 +75,10 @@ export function SettingsPage() {
 
   async function handleClearToken() {
     await replaceTodoistToken(queryClient, null)
+    const resetPreferences = getPreferences()
     setTokenState('')
+    setSomedayId(resetPreferences.somedayProjectId ?? '')
+    setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
   }
 
   const handleAppearanceChange = useCallback(
