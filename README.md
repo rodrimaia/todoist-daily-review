@@ -2,7 +2,7 @@
 
 A browser-based GTD daily and weekly review app built on top of Todoist.
 
-**Everything runs in your browser.** There is no backend, no server-side storage, no database. By default, your Todoist API token stays in the current browser tab's session storage; you can explicitly choose to remember it in local storage on that device. The token is never sent anywhere except directly to the Todoist API.
+**All Todoist data handling runs in your browser.** There is no backend, no server-side storage, no database. By default, your Todoist API token stays in the current browser tab's session storage; you can explicitly choose to remember it in local storage on that device. The token is never sent anywhere except directly to the Todoist API.
 
 Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing is stored on the server. The hosted version runs the exact same code in this repo.
 
@@ -38,6 +38,7 @@ Run the local checks with:
 
 ```bash
 bun test
+bun run test:telemetry-browser
 bun run typecheck
 bun run build
 ```
@@ -45,9 +46,16 @@ bun run build
 ### Settings
 
 - **Token session** -- switch between temporary browser-tab storage and remembering the token on the device
+- **Hosted pageview measurement** -- allow or decline aggregate pageview counts and change that choice later (Hosted instance only)
 - **Filter query** -- Todoist filter for which tasks to review (default: `@next_action & (no date | overdue | today)`)
 - **Someday/Maybe project** -- project where deferred tasks go
 - **Exclude projects** -- comma-separated prefixes to skip during weekly review (e.g. `AREA, LISTA`)
+
+### Hosted telemetry
+
+Only `review.rodrigomaia.me` offers optional, aggregate Umami pageview measurement. The Umami script is not loaded until a visitor explicitly allows it. Measurement is limited to the fixed Home, Daily Review, Weekly Review, and Settings routes; Todoist data, tokens, filter values, query parameters, identifiers, and custom events are never sent. The accepted or declined choice is stored in that browser and can be changed in Settings.
+
+Local development and every Self-hosted deployment omit this consent UI and never load or contact the project maintainer's Umami instance.
 
 ## Docker
 

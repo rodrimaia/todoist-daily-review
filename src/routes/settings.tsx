@@ -23,6 +23,7 @@ import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { ArrowLeft } from 'lucide-react'
 import { TodoistReadError } from '~/components/TodoistReadError'
+import { HostedTelemetrySettings } from '~/components/HostedTelemetry'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -240,6 +241,8 @@ export function SettingsPage() {
                 Changes apply immediately. System follows your device preference.
               </p>
             </div>
+
+            <HostedTelemetrySettings />
 
             <Button onClick={handleSave} className="w-full">
               {saved ? 'Saved!' : 'Save'}
