@@ -22,8 +22,10 @@ export interface Preferences {
   reviewTrackingTaskId: string | null
 }
 
+export const DEFAULT_FILTER_QUERY = '@next_action & (no date | overdue | today)'
+
 const DEFAULT_PREFERENCES: Preferences = {
-  filterQuery: '@next_action & (no date | overdue | today)',
+  filterQuery: DEFAULT_FILTER_QUERY,
   somedayProjectId: null,
   excludeProjectPrefixes: '',
   appearance: 'system',

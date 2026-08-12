@@ -5,10 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/com
 import { Input } from '~/components/ui/input'
 import { TokenPersistenceChoice } from '~/components/TokenPersistenceChoice'
 import { replaceTodoistToken } from '~/lib/todoist-session'
+import { isHostedTelemetryInstance } from '~/lib/telemetry'
 
 export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
   const [value, setValue] = useState('')
   const [rememberToken, setRememberToken] = useState(false)
+  const [hostname] = useState(() =>
+    typeof window === 'undefined' ? '' : window.location.hostname,
+  )
+  const isHosted = isHostedTelemetryInstance(hostname)
   const queryClient = useQueryClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,7 +33,8 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
       <CardHeader>
         <CardTitle>Connect to Todoist</CardTitle>
         <CardDescription>
-          Enter your API token to start a temporary Todoist session
+          Paste your Todoist API token to start a temporary session. You can
+          change or clear it later in Settings.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -50,6 +56,24 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
             Connect to Todoist
           </Button>
         </form>
+
+        {isHosted ? (
+          <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+            This is the independently operated Hosted instance at
+            review.rodrigomaia.me. Like any web host, it can record normal
+            technical access data such as request logs; it can&apos;t promise
+            that nothing is recorded. Optional, anonymous pageview counts are
+            offered only here and only after you allow them. Your token itself
+            is used only to talk to the Todoist API from your browser.
+          </p>
+        ) : (
+          <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
+            Your token is used only to talk to the Todoist API from your
+            browser. This copy is self-hosted: no telemetry is loaded, and how
+            much technical access data is recorded depends on your own hosting
+            setup.
+          </p>
+        )}
       </CardContent>
     </Card>
   )

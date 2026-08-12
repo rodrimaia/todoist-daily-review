@@ -11,6 +11,7 @@ import {
   getTokenPersistence,
   getPreferences,
   setPreferences,
+  DEFAULT_FILTER_QUERY,
   type Appearance,
 } from '~/lib/storage'
 import { updateAppearance, useAppearance } from '~/lib/use-appearance'
@@ -160,11 +161,28 @@ export function SettingsPage() {
               <Input
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                placeholder="@next_action & (no date | overdue | today)"
+                placeholder={DEFAULT_FILTER_QUERY}
               />
               <p className="text-xs text-muted-foreground">
-                Todoist filter syntax for which tasks to review
+                Todoist filter syntax for which tasks to review after the
+                Inbox. The default uses the{' '}
+                <code className="rounded bg-muted px-1 py-0.5">@next_action</code>{' '}
+                label:{' '}
+                <code className="rounded bg-muted px-1 py-0.5">{DEFAULT_FILTER_QUERY}</code>.
+                If your workflow uses different labels or priorities, change it
+                here — for example{' '}
+                <code className="rounded bg-muted px-1 py-0.5">@today</code> or{' '}
+                <code className="rounded bg-muted px-1 py-0.5">priority 1</code>.
               </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setFilter(DEFAULT_FILTER_QUERY)}
+                className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Reset to default filter
+              </Button>
             </div>
 
             <div className="space-y-2">
