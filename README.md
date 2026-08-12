@@ -2,7 +2,7 @@
 
 A browser-based GTD daily and weekly review app built on top of Todoist.
 
-**Everything runs in your browser.** There is no backend, no server-side storage, no database. Your Todoist API token is stored only in your browser's localStorage and is never sent anywhere except directly to the Todoist API.
+**Everything runs in your browser.** There is no backend, no server-side storage, no database. By default, your Todoist API token stays in the current browser tab's session storage; you can explicitly choose to remember it in local storage on that device. The token is never sent anywhere except directly to the Todoist API.
 
 Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing is stored on the server. The hosted version runs the exact same code in this repo.
 
@@ -23,7 +23,7 @@ Try it at **[review.rodrigomaia.me](https://review.rodrigomaia.me/)** -- nothing
 
 **Weekly Review** flows through five phases: **Inbox** (clear remaining inbox), **Projects** (review each active project for next actions), **Someday** (review your someday/maybe list), **Upcoming** (review all scheduled tasks grouped by day), and **Summary**.
 
-During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Changes advance the review optimistically and refresh only the affected in-memory Todoist data after success. Write failures remain visible for verification in Todoist. Read failures remain visible with a retry option. Replacing or clearing the API token, including from another tab, discards cached account data and account-specific selections.
+During a review, every change you make -- moving tasks, scheduling, completing, deleting -- is applied directly to your Todoist account in real time via the API. Changes advance the review optimistically and refresh only the affected in-memory Todoist data after success. Write failures remain visible for verification in Todoist. Read failures remain visible with a retry option. Replacing or clearing the API token discards cached account data and account-specific selections; remembered-token changes are also synchronized across tabs.
 
 ## Setup
 
@@ -44,6 +44,7 @@ bun run build
 
 ### Settings
 
+- **Token session** -- switch between temporary browser-tab storage and remembering the token on the device
 - **Filter query** -- Todoist filter for which tasks to review (default: `@next_action & (no date | overdue | today)`)
 - **Someday/Maybe project** -- project where deferred tasks go
 - **Exclude projects** -- comma-separated prefixes to skip during weekly review (e.g. `AREA, LISTA`)

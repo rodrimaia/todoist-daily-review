@@ -1,19 +1,24 @@
 import { useState, useCallback } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Separator } from '~/components/ui/separator'
+import { TokenPersistenceChoice } from '~/components/TokenPersistenceChoice'
 import {
   getToken,
+  getTokenPersistence,
   getPreferences,
   setPreferences,
   type Appearance,
 } from '~/lib/storage'
 import { updateAppearance, useAppearance } from '~/lib/use-appearance'
 import { getTodoistApi } from '~/lib/todoist'
-import { replaceTodoistToken } from '~/lib/todoist-session'
+import {
+  replaceTodoistToken,
+  setTodoistTokenPersistence,
+} from '~/lib/todoist-session'
 import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
 import { ArrowLeft } from 'lucide-react'
@@ -23,6 +28,9 @@ type Project = PersonalProject | WorkspaceProject
 
 export function SettingsPage() {
   const [token, setTokenState] = useState(() => getToken() ?? '')
+  const [rememberToken, setRememberToken] = useState(
+    () => getTokenPersistence() === 'remembered',
+  )
   const [filter, setFilter] = useState(() => getPreferences().filterQuery)
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')
   const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
@@ -30,6 +38,7 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const currentAppearance = useAppearance()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const hasToken = !!getToken()
 
@@ -51,14 +60,24 @@ export function SettingsPage() {
 
   async function handleSave() {
     const nextToken = token.trim()
-    const identityChanged = !!nextToken && nextToken !== getToken()
+    const currentToken = getToken()
+    const nextPersistence = rememberToken ? 'remembered' : 'temporary'
+    const identityChanged = !!nextToken && nextToken !== currentToken
+    const persistenceChanged =
+      !!nextToken &&
+      !identityChanged &&
+      nextPersistence !== getTokenPersistence()
+
     if (identityChanged) {
-      await replaceTodoistToken(queryClient, nextToken)
+      await replaceTodoistToken(queryClient, nextToken, nextPersistence)
       const resetPreferences = getPreferences()
       setTokenState(nextToken)
       setSomedayId(resetPreferences.somedayProjectId ?? '')
       setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
+    } else if (persistenceChanged) {
+      setTodoistTokenPersistence(nextPersistence)
     }
+
     setPreferences({
       filterQuery: filter,
       excludeProjectPrefixes: excludePrefixes,
@@ -77,8 +96,10 @@ export function SettingsPage() {
     await replaceTodoistToken(queryClient, null)
     const resetPreferences = getPreferences()
     setTokenState('')
+    setRememberToken(false)
     setSomedayId(resetPreferences.somedayProjectId ?? '')
     setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
+    await navigate({ to: '/', replace: true })
   }
 
   const handleAppearanceChange = useCallback(
@@ -109,9 +130,15 @@ export function SettingsPage() {
               <label className="text-sm font-medium">API Token</label>
               <Input
                 type="password"
+                autoComplete="off"
                 value={token}
                 onChange={(e) => setTokenState(e.target.value)}
                 placeholder="Your Todoist API token"
+              />
+              <TokenPersistenceChoice
+                id="settings-remember-token"
+                remembered={rememberToken}
+                onRememberedChange={setRememberToken}
               />
               {hasToken && (
                 <Button

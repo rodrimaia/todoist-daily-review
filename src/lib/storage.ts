@@ -5,6 +5,13 @@ const STORAGE_KEYS = {
 
 export const TODOIST_TOKEN_STORAGE_KEY = STORAGE_KEYS.token
 
+export type TodoistTokenPersistence = 'temporary' | 'remembered'
+
+interface StoredTodoistToken {
+  token: string
+  persistence: TodoistTokenPersistence
+}
+
 export type Appearance = 'system' | 'light' | 'dark'
 
 export interface Preferences {
@@ -29,15 +36,47 @@ function isValidAppearance(value: unknown): value is Appearance {
 
 const APPEARANCE_KEYS = STORAGE_KEYS
 
-export function getToken(): string | null {
-  return localStorage.getItem(STORAGE_KEYS.token)
+function getStoredToken(): StoredTodoistToken | null {
+  const rememberedToken = localStorage.getItem(STORAGE_KEYS.token)
+  if (rememberedToken !== null) {
+    // A remembered token is authoritative if a prior transition or another tab
+    // left both scopes populated. Reading also repairs the stale temporary copy.
+    sessionStorage.removeItem(STORAGE_KEYS.token)
+    return { token: rememberedToken, persistence: 'remembered' }
+  }
+
+  const temporaryToken = sessionStorage.getItem(STORAGE_KEYS.token)
+  if (temporaryToken !== null) {
+    return { token: temporaryToken, persistence: 'temporary' }
+  }
+
+  return null
 }
 
-export function setToken(token: string): void {
-  localStorage.setItem(STORAGE_KEYS.token, token)
+export function getToken(): string | null {
+  return getStoredToken()?.token ?? null
+}
+
+export function getTokenPersistence(): TodoistTokenPersistence | null {
+  return getStoredToken()?.persistence ?? null
+}
+
+export function setToken(
+  token: string,
+  persistence: TodoistTokenPersistence = 'temporary',
+): void {
+  if (persistence === 'remembered') {
+    sessionStorage.removeItem(STORAGE_KEYS.token)
+    localStorage.setItem(STORAGE_KEYS.token, token)
+    return
+  }
+
+  localStorage.removeItem(STORAGE_KEYS.token)
+  sessionStorage.setItem(STORAGE_KEYS.token, token)
 }
 
 export function clearToken(): void {
+  sessionStorage.removeItem(STORAGE_KEYS.token)
   localStorage.removeItem(STORAGE_KEYS.token)
 }
 
