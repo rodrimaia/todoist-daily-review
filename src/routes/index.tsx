@@ -20,8 +20,15 @@ export function Home() {
 
   if (!hasToken) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-4">
         <ApiTokenForm onSaved={handleTokenSaved} />
+        <Link
+          to="/settings"
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          Settings
+        </Link>
       </div>
     )
   }

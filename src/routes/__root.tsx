@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAppearance } from '~/lib/use-appearance'
 import { observeTodoistTokenChanges } from '~/lib/todoist-session'
 import { TodoistWriteError } from '~/components/TodoistWriteError'
+import { HostedTelemetryProvider } from '~/components/HostedTelemetry'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,9 +30,11 @@ export function RootComponent() {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TodoistWriteError />
-      <Outlet key={identityVersion} />
-    </QueryClientProvider>
+    <HostedTelemetryProvider>
+      <QueryClientProvider client={queryClient}>
+        <TodoistWriteError />
+        <Outlet key={identityVersion} />
+      </QueryClientProvider>
+    </HostedTelemetryProvider>
   )
 }

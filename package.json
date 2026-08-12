@@ -6,6 +6,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "test": "bun test",
+    "test:telemetry-browser": "bun scripts/telemetry-browser-check.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
