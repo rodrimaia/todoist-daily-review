@@ -130,8 +130,6 @@ docker pull ghcr.io/rodrimaia/todoist-daily-review:latest
 docker run -p 3000:3000 ghcr.io/rodrimaia/todoist-daily-review:latest
 ```
 
-`latest` is updated only by a versioned release after its validation gate passes.
-
 ### Docker Compose
 
 The repository includes [`compose.yaml`](compose.yaml). Clone it and run:
@@ -162,9 +160,6 @@ build:
 bun install --frozen-lockfile
 bun run validate
 ```
-
-Maintainers must also complete the external-state and real-account checks in
-[`docs/releasing.md`](docs/releasing.md) before publishing a release.
 
 ## Contributing
 

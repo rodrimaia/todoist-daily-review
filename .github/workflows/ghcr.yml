@@ -4,7 +4,6 @@ on:
   pull_request:
   push:
     branches: [master]
-    tags: ['v*']
   workflow_dispatch:
 
 concurrency:
@@ -37,7 +36,7 @@ jobs:
 
   publish:
     name: Publish validated release image
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: validate
     runs-on: ubuntu-latest
     permissions:
@@ -55,7 +54,6 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
-            type=semver,pattern={{version}}
 
       - uses: docker/setup-buildx-action@v3
 
