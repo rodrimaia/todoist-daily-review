@@ -1,5 +1,8 @@
 # Todoist Daily Review
 
+<img width="823" height="583" alt="image" src="https://github.com/user-attachments/assets/e8c0fdb0-d4aa-4bdd-a14d-188a9cab0f8a" />
+
+
 A friendly, browser-based GTD review for your Todoist account. It guides you
 through a **Daily Review** (clear your Inbox, then work through your next
 actions) and a **Weekly Review** (projects, someday/maybe, and the week ahead)
