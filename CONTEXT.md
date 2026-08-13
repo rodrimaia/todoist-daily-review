@@ -10,6 +10,22 @@ A guided session that processes Inbox tasks followed by tasks selected by the co
 **Weekly Review**:
 A guided session that processes every weekly review phase. Stopping early does not complete the Weekly Review.
 
+**Hosted instance**:
+The public deployment operated by the project maintainer. It serves the application but does not store Todoist account data or API tokens.
+_Avoid_: User-hosted instance, Todoist server
+
+**Self-hosted instance**:
+A deployment operated by a user from the public container image or source code. Its operator, rather than the project maintainer, controls the hosting infrastructure.
+_Avoid_: Hosted instance, local installation
+
+**Temporary token session**:
+A browser-tab session in which the Todoist API token survives reloads in session storage but is discarded when the tab is closed. It does not affect persisted review preferences.
+_Avoid_: Saved token, persistent login
+
+**Telemetry consent**:
+The visitor's explicit choice to allow aggregate pageview measurement for the Hosted instance's fixed routes. Refusal prevents analytics code from loading and sends no telemetry requests; task data, custom usage events, and Self-hosted instances are excluded.
+_Avoid_: Implied consent, necessary data
+
 **Review tracking task**:
 A configured recurring task that records completion of a Weekly Review. It does not participate in the Weekly Review, and a completed review never advances a future occurrence.
 _Avoid_: Weekly review task, reminder task
