@@ -83,7 +83,7 @@ is one click away in Settings.
   Review Filter phase (default shown above, resettable)
 - **Someday/Maybe project** — where deferred tasks go
 - **Exclude projects** — comma-separated prefixes to skip during the Weekly
-  Review (e.g. `AREA, LISTA`)
+  Review (for example `Archive, Reference`)
 - **Review tracking task** — optional recurring task completed automatically
   when you finish a Weekly Review
 - **Appearance** — system, light, or dark
@@ -130,7 +130,17 @@ docker pull ghcr.io/rodrimaia/todoist-daily-review:latest
 docker run -p 3000:3000 ghcr.io/rodrimaia/todoist-daily-review:latest
 ```
 
+`latest` is updated only by a versioned release after its validation gate passes.
+
 ### Docker Compose
+
+The repository includes [`compose.yaml`](compose.yaml). Clone it and run:
+
+```bash
+docker compose up -d
+```
+
+Or save this equivalent configuration as `compose.yaml`:
 
 ```yaml
 services:
@@ -141,14 +151,39 @@ services:
     restart: unless-stopped
 ```
 
-## Checks
+Then open http://localhost:3000. Stop it with `docker compose down`.
+
+## Validation
+
+The release gate uses Bun 1.3.9, Playwright Chromium, Docker with Compose v2,
+and Gitleaks 8.30.1. Install the locked dependencies and browser once, then
+run every code, type, build, and browser check:
 
 ```bash
-bun test
-bun run test:telemetry-browser
-bun run typecheck
-bun run build
+bun install --frozen-lockfile
+bunx playwright install --with-deps chromium
+bun run validate
 ```
+
+Scan the tracked release tree and every commit in the complete Git history:
+
+```bash
+gitleaks dir . --redact --no-banner
+gitleaks git . --redact --log-opts=--all
+```
+
+Finally, build the production image and smoke-test both `docker run` and the
+committed Compose service. This checks every SPA route, referenced JS/CSS
+asset, missing-asset behavior, security headers, token persistence, Hosted
+consent transitions, and that a Self-hosted browser makes no request to the
+maintainer's Umami instance:
+
+```bash
+bun run test:container
+```
+
+Maintainers must also complete the external-state and real-account checks in
+[`docs/releasing.md`](docs/releasing.md) before publishing a release.
 
 ## Contributing
 

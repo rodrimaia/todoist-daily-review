@@ -1,0 +1,6 @@
+services:
+  todoist-daily-review:
+    image: ${TODOIST_DAILY_REVIEW_IMAGE:-ghcr.io/rodrimaia/todoist-daily-review:latest}
+    ports:
+      - "${TODOIST_DAILY_REVIEW_PORT:-3000}:3000"
+    restart: unless-stopped

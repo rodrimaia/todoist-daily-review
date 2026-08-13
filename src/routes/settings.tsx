@@ -216,7 +216,7 @@ export function SettingsPage() {
               <Input
                 value={excludePrefixes}
                 onChange={(e) => setExcludePrefixes(e.target.value)}
-                placeholder="AREA, LISTA"
+                placeholder="Archive, Reference"
               />
               <p className="text-xs text-muted-foreground">
                 Comma-separated prefixes. Projects starting with these are skipped during weekly review.
