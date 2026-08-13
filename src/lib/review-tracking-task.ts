@@ -1,17 +1,28 @@
 import type { Task } from '@doist/todoist-sdk'
 
+const opaqueTaskIdPattern = /^[A-Za-z0-9]{16}$/
+const legacyTaskIdPattern = /^\d+$/
+
+function isTaskId(value: string): boolean {
+  return opaqueTaskIdPattern.test(value) || legacyTaskIdPattern.test(value)
+}
+
 /** Returns the canonical task ID from a raw ID or an official Todoist task URL. */
 export function normalizeReviewTrackingTaskId(value: string): string | null {
   const candidate = value.trim()
-  if (/^\d+$/.test(candidate)) return candidate
+  if (isTaskId(candidate)) return candidate
 
   try {
     const url = new URL(candidate)
     if (url.protocol !== 'https:' || !['todoist.com', 'www.todoist.com', 'app.todoist.com'].includes(url.hostname)) {
       return null
     }
-    const match = url.pathname.match(/^\/app\/task\/(\d+)\/?$/)
-    return match?.[1] ?? null
+    const pathMatch = url.pathname.match(/^\/app\/task\/([^/]+)\/?$/)
+    const taskPath = pathMatch?.[1]
+    if (!taskPath) return null
+    if (isTaskId(taskPath)) return taskPath
+
+    return taskPath.match(/-([A-Za-z0-9]{16})$/)?.[1] ?? null
   } catch {
     return null
   }
