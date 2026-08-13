@@ -5,7 +5,8 @@ import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk
 import { getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
-import { canChangeTaskDueDate, canSkipTask, isEligibleTrackingOccurrence } from '~/lib/task-decisions'
+import { canChangeTaskDueDate, canSkipTask, getReviewTrackingTaskInvalidReason, isEligibleTrackingOccurrence } from '~/lib/task-decisions'
+import { getTodoistReadFailureMessage } from '~/lib/review-tracking-task'
 import {
   weeklyReviewReducer,
   weeklyInitialState,
@@ -44,6 +45,7 @@ export function WeeklyReviewPage() {
   const [state, dispatch] = useReducer(weeklyReviewReducer, weeklyInitialState)
   const [started, setStarted] = useState(false)
   const [isTracking, setIsTracking] = useState(false)
+  const [trackingFailure, setTrackingFailure] = useState<string | null>(null)
 
   const {
     data: user,
@@ -434,20 +436,31 @@ export function WeeklyReviewPage() {
       }
 
       setIsTracking(true)
+      setTrackingFailure(null)
+      let taskValidated = false
       try {
-        const api = getTodoistApi()
-        const task = await api.getTask(trackingTaskId)
-
+        const task = await getTodoistApi().getTask(trackingTaskId)
+        const invalidReason = getReviewTrackingTaskInvalidReason(task)
+        if (invalidReason) {
+          setTrackingFailure(invalidReason)
+          return
+        }
+        taskValidated = true
         if (isEligibleTrackingOccurrence(task, reviewDay)) {
           await completeTask.mutateAsync(trackingTaskId)
         }
-      } catch {
-        // Technical failure: surface it but continue.
-        // The existing mutations already show write errors globally.
+        navigate({ to: '/' })
+      } catch (error) {
+        setTrackingFailure(taskValidated
+          ? 'Could not complete the Review tracking task. Please retry.'
+          : getTodoistReadFailureMessage(error))
       } finally {
         setIsTracking(false)
-        navigate({ to: '/' })
       }
+    }
+
+    const handleFinishWithoutTracking = () => {
+      navigate({ to: '/' })
     }
 
     return (
@@ -459,6 +472,8 @@ export function WeeklyReviewPage() {
           upcomingStats={state.upcomingStats}
           onDone={handleDone}
           isProcessing={isTracking}
+          trackingFailure={trackingFailure}
+          onFinishWithoutTracking={handleFinishWithoutTracking}
         />
       </div>
     )
