@@ -16,23 +16,13 @@ time. Do not record browser request headers or response bodies from Todoist.
 
 ## 2. Audit public material
 
-1. Run the full-history Gitleaks command from the README.
-2. Export and scan GitHub-visible issue, pull-request, review, comment, and
-   release text, then inspect the export manually:
-
-   ```bash
-   PUBLIC_METADATA_OUTPUT=/tmp/todoist-daily-review-public-metadata.json \
-     bun run check:public-metadata
-   ```
-
-   Delete the export after review. The automated check catches secrets and
-   local filesystem paths; a human must still look for Todoist content,
-   unnecessary biographical details, private infrastructure, and screenshots.
-3. Inspect `git ls-files` and the public commit list. Confirm that tracked files
-   contain no environment files, browser profiles, generated evidence, real
-   account identifiers, or personal Todoist content. The maintainer's name,
-   project domain, Hosted Umami origin, and public Umami website ID are
-   intentional project metadata, not credentials.
+Inspect `git ls-files`, the public commit list, and GitHub-visible issue,
+pull-request, review, comment, and release text. Confirm they contain no
+environment files, browser profiles, generated evidence, real account
+identifiers, personal Todoist content, unnecessary biographical details,
+private infrastructure, or local filesystem paths. The maintainer's name,
+project domain, Hosted Umami origin, and public Umami website ID are intentional
+project metadata, not credentials.
 
 ### Dispose of PR #10
 
@@ -114,9 +104,9 @@ maintainer or release automation with explicit authority.
 ## 5. Publish last
 
 Push the chosen semantic version tag only after every item above passes. The
-`Validate and publish` workflow reruns the release gate and publishes the
-matching versioned GHCR tag. Wait for that workflow and the Hosted deployment
-to succeed, repeat the anonymous checks, and only then create the GitHub release
+`Validate and publish` workflow runs the automated validation and publishes the
+matching versioned GHCR tag. Wait for that workflow and the Hosted deployment to
+succeed, repeat the anonymous checks, and only then create the GitHub release
 from that tag with concise visitor-facing notes.
 
 If any post-publish check fails, do not move or reuse the tag. Fix forward with

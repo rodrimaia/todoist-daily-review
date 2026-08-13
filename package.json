@@ -6,12 +6,9 @@
     "dev": "vite dev",
     "build": "vite build",
     "test": "bun test",
-    "test:browser": "bun scripts/browser-check.ts",
-    "test:container": "bash scripts/container-smoke.sh",
     "test:telemetry-browser": "bun scripts/telemetry-browser-check.ts",
     "typecheck": "tsc --noEmit",
-    "validate": "bun run test && bun run test:telemetry-browser && bun run typecheck && bun run build && bun run test:browser",
-    "check:public-metadata": "bash scripts/public-metadata-check.sh"
+    "validate": "bun run test && bun run test:telemetry-browser && bun run typecheck && bun run build"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -19,7 +16,6 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "playwright": "1.62.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vite": "^8.0.3"

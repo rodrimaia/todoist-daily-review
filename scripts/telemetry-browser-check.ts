@@ -60,7 +60,7 @@ accepted.network.scriptLoaded()
 await Promise.resolve()
 assert(accepted.network.pageviews.length === 0, 'A query-bearing URL was measured')
 accepted.telemetry.update('accepted', '/review')
-assert(Number(accepted.network.pageviews.length) === 1, 'Fixed route was not measured')
+assert(accepted.network.pageviews.length === 1, 'Fixed route was not measured')
 assert(
   JSON.stringify(accepted.network.pageviews) ===
     JSON.stringify([

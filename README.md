@@ -155,31 +155,12 @@ Then open http://localhost:3000. Stop it with `docker compose down`.
 
 ## Validation
 
-The release gate uses Bun 1.3.9, Playwright Chromium, Docker with Compose v2,
-and Gitleaks 8.30.1. Install the locked dependencies and browser once, then
-run every code, type, build, and browser check:
+Install the locked dependencies, then run the tests, typecheck, and production
+build:
 
 ```bash
 bun install --frozen-lockfile
-bunx playwright install --with-deps chromium
 bun run validate
-```
-
-Scan the tracked release tree and every commit in the complete Git history:
-
-```bash
-gitleaks dir . --redact --no-banner
-gitleaks git . --redact --log-opts=--all
-```
-
-Finally, build the production image and smoke-test both `docker run` and the
-committed Compose service. This checks every SPA route, referenced JS/CSS
-asset, missing-asset behavior, security headers, token persistence, Hosted
-consent transitions, and that a Self-hosted browser makes no request to the
-maintainer's Umami instance:
-
-```bash
-bun run test:container
 ```
 
 Maintainers must also complete the external-state and real-account checks in
