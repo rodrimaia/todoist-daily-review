@@ -27,7 +27,7 @@ The visitor's explicit choice to allow aggregate pageview measurement for the Ho
 _Avoid_: Implied consent, necessary data
 
 **Review tracking task**:
-A configured recurring task that records completion of a Weekly Review. It does not participate in the Weekly Review, and a completed review never advances a future occurrence.
+A configured task, accessible in the current Todoist account, that is open, recurring, and has due data. It records completion of a Weekly Review, does not participate in that review, and a completed review never advances a future occurrence.
 _Avoid_: Weekly review task, reminder task
 
 **Eligible tracking occurrence**:

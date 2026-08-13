@@ -1,10 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
-import { Separator } from '~/components/ui/separator'
 import { TokenPersistenceChoice } from '~/components/TokenPersistenceChoice'
 import {
   getToken,
@@ -22,7 +20,7 @@ import {
 } from '~/lib/todoist-session'
 import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
-import { ArrowLeft, Check, Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { getReviewTrackingTaskInvalidReason } from '~/lib/task-decisions'
 import {
   getReviewTrackingTaskSchedule,
@@ -31,6 +29,7 @@ import {
 } from '~/lib/review-tracking-task'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { HostedTelemetrySettings } from '~/components/HostedTelemetry'
+import { PaperMasthead, PaperPage } from '~/components/PaperPage'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -179,182 +178,217 @@ export function SettingsPage() {
   )
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 pt-8 gap-6">
-      <div className="w-full max-w-md">
-        <Link
-          to="/"
-          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors mb-6"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back
-        </Link>
+    <PaperPage>
+      <div className="mx-auto max-w-5xl">
+        <PaperMasthead
+          eyebrow="Settings"
+          title="Tune the ritual."
+          description="The quiet machinery behind your Daily and Weekly Reviews."
+          backTo="/"
+          backLabel="Return to the desk"
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-            <CardDescription>Configure your daily review</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">API Token</label>
-              <Input
-                type="password"
-                autoComplete="off"
-                value={token}
-                onChange={(e) => setTokenState(e.target.value)}
-                placeholder="Your Todoist API token"
-              />
-              <TokenPersistenceChoice
-                id="settings-remember-token"
-                remembered={rememberToken}
-                onRememberedChange={setRememberToken}
-              />
-              {hasToken && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearToken}
-                  className="text-destructive text-xs"
-                >
-                  Clear token
-                </Button>
-              )}
-            </div>
+        <div className="grid gap-10 py-10 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-20">
+          <aside className="text-sm leading-6 text-current/50">
+            <p className="font-serif text-xl italic text-current/75">Small adjustments, kept in one place.</p>
+            <p className="mt-3">Your token and review preferences stay in this browser. Appearance changes are immediate.</p>
+          </aside>
 
-            <Separator />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Review filter</label>
-              <Input
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder={DEFAULT_FILTER_QUERY}
-              />
-              <p className="text-xs text-muted-foreground">
-                Todoist filter syntax for which tasks to review after the
-                Inbox. The default uses the{' '}
-                <code className="rounded bg-muted px-1 py-0.5">@next_action</code>{' '}
-                label:{' '}
-                <code className="rounded bg-muted px-1 py-0.5">{DEFAULT_FILTER_QUERY}</code>.
-                If your workflow uses different labels or priorities, change it
-                here — for example{' '}
-                <code className="rounded bg-muted px-1 py-0.5">@today</code> or{' '}
-                <code className="rounded bg-muted px-1 py-0.5">priority 1</code>.
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setFilter(DEFAULT_FILTER_QUERY)}
-                className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-              >
-                Reset to default filter
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Someday/Maybe project</label>
-              {projectsError ? (
-                <TodoistReadError
-                  onRetry={() => void refetchProjects()}
-                  isRetrying={projectsFetching}
-                  showSettingsLink={false}
+          <div className="min-w-0 border-b border-current/20">
+            <section className="py-10 first:pt-0">
+              <div className="flex items-center gap-3">
+                <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">01 · Connection</p>
+                <span className="h-px flex-1 bg-current/20" />
+              </div>
+              <h2 className="mt-2 font-serif text-3xl">Todoist connection</h2>
+              <div className="mt-7 space-y-5">
+                <div className="space-y-2">
+                  <label htmlFor="settings-api-token" className="text-sm font-medium">API Token</label>
+                  <Input
+                    id="settings-api-token"
+                    type="password"
+                    autoComplete="off"
+                    value={token}
+                    onChange={(e) => setTokenState(e.target.value)}
+                    placeholder="Your Todoist API token"
+                  />
+                </div>
+                <TokenPersistenceChoice
+                  id="settings-remember-token"
+                  remembered={rememberToken}
+                  onRememberedChange={setRememberToken}
                 />
-              ) : (
-                <select
-                  value={somedayId}
-                  onChange={(e) => setSomedayId(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">None</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+                {hasToken && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearToken}
+                    className="border-destructive/35 bg-transparent text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    Clear token
+                  </Button>
+                )}
+              </div>
+            </section>
 
-            <Separator />
+            <section className="py-10">
+              <div className="flex items-center gap-3">
+                <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">02 · Daily Review</p>
+                <span className="h-px flex-1 bg-current/20" />
+              </div>
+              <h2 className="mt-2 font-serif text-3xl">Daily defaults</h2>
+              <div className="mt-8 space-y-8">
+                <div className="space-y-3">
+                  <label htmlFor="settings-filter" className="text-sm font-medium">Review filter</label>
+                  <Input
+                    id="settings-filter"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    placeholder={DEFAULT_FILTER_QUERY}
+                  />
+                  <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
+                    Todoist filter syntax for which tasks to review after the Inbox. The default uses the{' '}
+                    <code className="rounded bg-muted px-1 py-0.5">@next_action</code> label:{' '}
+                    <code className="rounded bg-muted px-1 py-0.5">{DEFAULT_FILTER_QUERY}</code>.
+                    If your workflow differs, try{' '}
+                    <code className="rounded bg-muted px-1 py-0.5">@today</code> or{' '}
+                    <code className="rounded bg-muted px-1 py-0.5">priority 1</code>.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFilter(DEFAULT_FILTER_QUERY)}
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Reset to default filter
+                  </Button>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Exclude projects (weekly review)</label>
-              <Input
-                value={excludePrefixes}
-                onChange={(e) => setExcludePrefixes(e.target.value)}
-                placeholder="Archive, Reference"
-              />
-              <p className="text-xs text-muted-foreground">
-                Comma-separated prefixes. Projects starting with these are skipped during weekly review.
-              </p>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Review tracking task</label>
-              <Input
-                value={reviewTrackingTaskId}
-                onChange={(e) => {
-                  setReviewTrackingTaskId(e.target.value)
-                  setTrackingValidation({ status: 'pending' })
-                }}
-                placeholder="Task ID or Todoist URL (optional)"
-              />
-              <p className="text-xs text-muted-foreground">
-                ID or URL of an open, recurring Todoist task with a due date.
-              </p>
-              {trackingTaskChanged && trackingValidation.status === 'pending' && (
-                <p className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validating task…</p>
-              )}
-              {trackingTaskChanged && trackingValidation.status === 'valid' && (
-                <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><Check className="h-3.5 w-3.5" /> Valid: {trackingValidation.title} — {trackingValidation.schedule}</p>
-              )}
-              {trackingTaskChanged && (trackingValidation.status === 'invalid' || trackingValidation.status === 'unavailable') && (
-                <div className="flex items-center gap-2 text-xs text-destructive">
-                  <span>{trackingValidation.message}</span>
-                  {trackingValidation.status === 'unavailable' && !tokenChanged && hasToken && (
-                    <Button type="button" variant="ghost" size="sm" className="h-auto p-0 text-xs" onClick={() => setValidationAttempt((attempt) => attempt + 1)}>Retry validation</Button>
+                <div className="space-y-3 border-t border-current/10 pt-7">
+                  <label htmlFor="settings-someday" className="text-sm font-medium">Someday/Maybe project</label>
+                  {projectsError ? (
+                    <TodoistReadError
+                      onRetry={() => void refetchProjects()}
+                      isRetrying={projectsFetching}
+                      showSettingsLink={false}
+                    />
+                  ) : (
+                    <select
+                      id="settings-someday"
+                      value={somedayId}
+                      onChange={(e) => setSomedayId(e.target.value)}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">None</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
                   )}
                 </div>
-              )}
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Appearance</label>
-              <div className="flex gap-2">
-                {(['system', 'light', 'dark'] as Appearance[]).map((option) => (
-                  <Button
-                    key={option}
-                    variant={currentAppearance === option ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => handleAppearanceChange(option)}
-                    className="flex-1"
-                  >
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </Button>
-                ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Changes apply immediately. System follows your device preference.
-              </p>
+            </section>
+
+            <section className="py-10">
+              <div className="flex items-center gap-3">
+                <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">03 · Weekly Review</p>
+                <span className="h-px flex-1 bg-current/20" />
+              </div>
+              <h2 className="mt-2 font-serif text-3xl">Weekly boundaries</h2>
+              <div className="mt-8 grid gap-8 xl:grid-cols-2">
+                <div className="space-y-3">
+                  <label htmlFor="settings-excludes" className="text-sm font-medium">Exclude projects</label>
+                  <Input
+                    id="settings-excludes"
+                    value={excludePrefixes}
+                    onChange={(e) => setExcludePrefixes(e.target.value)}
+                    placeholder="Archive, Reference"
+                  />
+                  <p className="text-xs leading-5 text-muted-foreground">Comma-separated prefixes. Matching projects are skipped.</p>
+                </div>
+                <div className="space-y-3">
+                  <label htmlFor="settings-tracking" className="text-sm font-medium">Review tracking task</label>
+                  <Input
+                    id="settings-tracking"
+                    value={reviewTrackingTaskId}
+                    onChange={(e) => {
+                      setReviewTrackingTaskId(e.target.value)
+                      setTrackingValidation({ status: 'pending' })
+                    }}
+                    placeholder="Task ID or Todoist URL (optional)"
+                  />
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    ID or URL of an open, recurring Todoist task with a due date.
+                  </p>
+                  {trackingTaskChanged && trackingValidation.status === 'pending' && (
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Validating task…
+                    </p>
+                  )}
+                  {trackingTaskChanged && trackingValidation.status === 'valid' && (
+                    <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                      <Check className="h-3.5 w-3.5" /> Valid: {trackingValidation.title} — {trackingValidation.schedule}
+                    </p>
+                  )}
+                  {trackingTaskChanged && (trackingValidation.status === 'invalid' || trackingValidation.status === 'unavailable') && (
+                    <div className="flex items-center gap-2 text-xs text-destructive">
+                      <span>{trackingValidation.message}</span>
+                      {trackingValidation.status === 'unavailable' && !tokenChanged && hasToken && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => setValidationAttempt((attempt) => attempt + 1)}
+                        >
+                          Retry validation
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="py-10">
+              <div className="flex items-center gap-3">
+                <p className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">04 · Reading room</p>
+                <span className="h-px flex-1 bg-current/20" />
+              </div>
+              <h2 className="mt-2 font-serif text-3xl">Appearance</h2>
+              <div className="mt-7 space-y-3">
+                <div className="flex gap-2">
+                  {(['system', 'light', 'dark'] as Appearance[]).map((option) => (
+                    <Button
+                      key={option}
+                      variant={currentAppearance === option ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleAppearanceChange(option)}
+                      className="flex-1"
+                    >
+                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Changes apply immediately. System follows your device preference.</p>
+              </div>
+              <HostedTelemetrySettings />
+            </section>
+
+            <div className="border-t border-current/20 py-8">
+              <Button
+                onClick={handleSave}
+                disabled={trackingTaskChanged && !!reviewTrackingTaskId.trim() && trackingValidation.status !== 'valid'}
+                size="lg"
+                className="w-full"
+              >
+                {saved ? 'Saved!' : 'Save settings'}
+              </Button>
             </div>
-
-            <HostedTelemetrySettings />
-
-            <Button
-              onClick={handleSave}
-              disabled={trackingTaskChanged && !!reviewTrackingTaskId.trim() && trackingValidation.status !== 'valid'}
-              className="w-full"
-            >
-              {saved ? 'Saved!' : 'Save'}
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-    </div>
+    </PaperPage>
   )
 }

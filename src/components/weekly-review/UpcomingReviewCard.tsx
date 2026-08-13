@@ -220,10 +220,10 @@ export function UpcomingReviewCard({
   }
 
   return (
-    <Card className="w-full max-w-lg animate-in fade-in duration-200">
+    <Card className="w-full max-w-3xl animate-in rounded-none border-x-0 bg-transparent fade-in duration-200">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-serif text-3xl">
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             Upcoming
           </CardTitle>

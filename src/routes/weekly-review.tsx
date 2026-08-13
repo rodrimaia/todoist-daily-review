@@ -30,11 +30,11 @@ import { UpcomingReviewCard } from '~/components/weekly-review/UpcomingReviewCar
 import { ProjectReviewCard } from '~/components/weekly-review/ProjectReviewCard'
 import { ProjectActionBar } from '~/components/weekly-review/ProjectActionBar'
 import { SomedayReviewCard } from '~/components/weekly-review/SomedayReviewCard'
-import { WeeklyReviewProgress } from '~/components/weekly-review/WeeklyReviewProgress'
 import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSummary'
-import { Loader2 } from 'lucide-react'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { useTodoistUser } from '~/lib/use-todoist-user'
+import { WeeklyReviewFrame } from '~/components/weekly-review/WeeklyReviewFrame'
+import { PaperLoading, PaperMessage, PaperPage } from '~/components/PaperPage'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -398,7 +398,7 @@ export function WeeklyReviewPage() {
 
   if (isReadError) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <PaperPage className="grid place-items-center">
         <TodoistReadError
           onRetry={() => void Promise.all([
             refetchUser(),
@@ -411,16 +411,12 @@ export function WeeklyReviewPage() {
             userFetching || projectsFetching || inboxFetching || upcomingFetching || allTasksFetching
           }
         />
-      </div>
+      </PaperPage>
     )
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PaperLoading label="Preparing the weekly review" />
   }
 
   if (state.phase === 'summary') {
@@ -464,7 +460,7 @@ export function WeeklyReviewPage() {
     }
 
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <PaperPage className="grid place-items-center">
         <WeeklyReviewSummary
           inboxStats={state.inboxStats}
           projectStats={state.projectStats}
@@ -475,33 +471,34 @@ export function WeeklyReviewPage() {
           trackingFailure={trackingFailure}
           onFinishWithoutTracking={handleFinishWithoutTracking}
         />
-      </div>
+      </PaperPage>
     )
   }
 
   if (state.phase === 'projects' && currentProject) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
-        <WeeklyReviewProgress state={state} />
+      <WeeklyReviewFrame state={state}>
         <ProjectReviewCard
           projectWithTasks={currentProject}
           animationKey={`projects-${state.projectIndex}`}
         />
-        <ProjectActionBar
-          projectWithTasks={currentProject}
-          onOk={handleProjectOk}
-          onAddTask={handleProjectAddTask}
-          onDeleteProject={handleProjectDelete}
-          onSkip={handleProjectSkip}
-          onStop={handleStop}
-        />
-      </div>
+        <div className="w-full max-w-2xl [&>div]:max-w-none">
+          <ProjectActionBar
+            projectWithTasks={currentProject}
+            onOk={handleProjectOk}
+            onAddTask={handleProjectAddTask}
+            onDeleteProject={handleProjectDelete}
+            onSkip={handleProjectSkip}
+            onStop={handleStop}
+          />
+        </div>
+      </WeeklyReviewFrame>
     )
   }
 
   if (state.phase === 'someday') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
+      <WeeklyReviewFrame state={state}>
         <SomedayReviewCard
           tasks={state.somedayTasks}
           onActivate={handleSomedayActivate}
@@ -509,13 +506,13 @@ export function WeeklyReviewPage() {
           onDone={handleSomedayDone}
           onStop={handleStop}
         />
-      </div>
+      </WeeklyReviewFrame>
     )
   }
 
   if (state.phase === 'upcoming') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
+      <WeeklyReviewFrame state={state}>
         <UpcomingReviewCard
           tasks={state.upcomingTasks}
           projectMap={projectMap}
@@ -525,45 +522,40 @@ export function WeeklyReviewPage() {
           onDone={handleUpcomingDone}
           onStop={handleStop}
         />
-      </div>
+      </WeeklyReviewFrame>
     )
   }
 
   if (!currentTask) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">No tasks to review</p>
-      </div>
-    )
+    return <PaperMessage eyebrow="Weekly review" title="Nothing is waiting here." />
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
-      <WeeklyReviewProgress state={state} />
-
+    <WeeklyReviewFrame state={state}>
       <TaskCard
         task={currentTask}
         projectMap={projectMap}
         animationKey={`inbox-${state.inboxIndex}`}
       />
 
-      <InboxActionBar
-        key={currentTask.id}
-        projects={projects}
-        task={currentTask}
-        todoistTimezone={user?.tzInfo.timezone ?? 'UTC'}
-        timeFormat={user?.timeFormat ?? 0}
-        somedayProjectId={prefs.somedayProjectId}
-        onMoveToProject={handleInboxMoveToProject}
-        onMoveToSomeday={handleInboxMoveToSomeday}
-        onComplete={handleInboxComplete}
-        onDelete={handleInboxDelete}
-        onSkip={handleInboxSkip}
-        onStop={handleStop}
-        onCreateProject={handleCreateProject}
-        canSkip={canSkipInboxTask}
-      />
-
-    </div>
+      <div className="w-full max-w-2xl [&>div]:max-w-none">
+        <InboxActionBar
+          key={currentTask.id}
+          projects={projects}
+          task={currentTask}
+          todoistTimezone={user?.tzInfo.timezone ?? 'UTC'}
+          timeFormat={user?.timeFormat ?? 0}
+          somedayProjectId={prefs.somedayProjectId}
+          onMoveToProject={handleInboxMoveToProject}
+          onMoveToSomeday={handleInboxMoveToSomeday}
+          onComplete={handleInboxComplete}
+          onDelete={handleInboxDelete}
+          onSkip={handleInboxSkip}
+          onStop={handleStop}
+          onCreateProject={handleCreateProject}
+          canSkip={canSkipInboxTask}
+        />
+      </div>
+    </WeeklyReviewFrame>
   )
 }

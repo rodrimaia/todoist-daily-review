@@ -43,10 +43,10 @@ export function TaskCard({
   return (
     <Card
       key={animationKey}
-      className="w-full max-w-md animate-in fade-in slide-in-from-right-4 duration-150"
+      className="w-full max-w-2xl animate-in rounded-none border-x-0 bg-transparent fade-in slide-in-from-right-4 duration-150"
     >
       <CardContent className="p-6 space-y-3">
-        <p className="text-lg font-medium leading-snug">{task.content}</p>
+        <p className="font-serif text-3xl leading-snug sm:text-4xl">{task.content}</p>
         {task.description && (
           <p className="text-sm text-muted-foreground leading-relaxed">
             {task.description}

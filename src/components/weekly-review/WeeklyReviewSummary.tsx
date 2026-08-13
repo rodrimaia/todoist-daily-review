@@ -65,14 +65,16 @@ export function WeeklyReviewSummary({
   const grandTotal = inboxTotal + projectTotal + somedayTotal + upcomingTotal
 
   return (
-    <Card className="w-full max-w-md animate-in fade-in duration-200">
+    <Card className="w-full max-w-xl animate-in rounded-none border-x-0 bg-transparent fade-in duration-200">
       <CardHeader>
-        <CardTitle className="text-xl">Weekly Review Complete</CardTitle>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-700 dark:text-orange-300">Filed for the week</p>
+        <CardTitle className="font-serif text-4xl sm:text-5xl">Weekly Review complete.</CardTitle>
+        <p className="font-serif text-lg italic text-current/55">You have the wider view again.</p>
       </CardHeader>
       <CardContent className="space-y-4">
         {inboxTotal > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Inbox ({inboxTotal})</p>
+            <p className="font-serif text-xl">Inbox ({inboxTotal})</p>
             <div className="space-y-1">
               <StatRow icon={FolderOpen} label="Moved to project" count={inboxStats.moved} />
               <StatRow icon={Lightbulb} label="Someday/Maybe" count={inboxStats.someday} />
@@ -87,7 +89,7 @@ export function WeeklyReviewSummary({
 
         {projectTotal > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Projects ({projectTotal})</p>
+            <p className="font-serif text-xl">Projects ({projectTotal})</p>
             <div className="space-y-1">
               <StatRow icon={Eye} label="Reviewed" count={projectStats.reviewed} />
               <StatRow icon={Plus} label="Tasks added" count={projectStats.tasksAdded} />
@@ -101,7 +103,7 @@ export function WeeklyReviewSummary({
 
         {somedayTotal > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Someday/Maybe ({somedayTotal})</p>
+            <p className="font-serif text-xl">Someday/Maybe ({somedayTotal})</p>
             <div className="space-y-1">
               <StatRow icon={Play} label="Activated" count={somedayStats.activated} />
               <StatRow icon={Check} label="Kept" count={somedayStats.kept} />
@@ -114,7 +116,7 @@ export function WeeklyReviewSummary({
 
         {upcomingTotal > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Upcoming ({upcomingTotal})</p>
+            <p className="font-serif text-xl">Upcoming ({upcomingTotal})</p>
             <div className="space-y-1">
               <StatRow icon={CalendarRange} label="Rescheduled" count={upcomingStats.rescheduled} />
               <StatRow icon={Check} label="Completed" count={upcomingStats.completed} />

@@ -11,6 +11,7 @@ import { getPreferences } from '~/lib/storage'
 import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { TodoistReadError } from '~/components/TodoistReadError'
+import { PaperMasthead, PaperPage } from '~/components/PaperPage'
 
 export function Home() {
   const [hasToken, setHasToken] = useState(() => !!getToken())
@@ -21,7 +22,7 @@ export function Home() {
 
   if (!hasToken) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-8">
+      <PaperPage className="flex flex-col items-center justify-center gap-8">
         <WelcomeIntro />
 
         <ApiTokenForm onSaved={handleTokenSaved} />
@@ -33,7 +34,7 @@ export function Home() {
           <Settings className="h-3.5 w-3.5" />
           Settings
         </Link>
-      </div>
+      </PaperPage>
     )
   }
 
@@ -78,76 +79,90 @@ function Dashboard() {
 
   if (inboxError || filterError) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <PaperPage className="grid place-items-center">
         <TodoistReadError
           onRetry={() => void Promise.all([refetchInbox(), refetchFilter()])}
           isRetrying={inboxFetching || filterFetching}
         />
-      </div>
+      </PaperPage>
     )
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-medium">GTD Review</h1>
-        <p className="text-muted-foreground text-sm">
-          {isLoading ? 'Loading...' : `${inboxCount} inbox, ${filterCount} to review`}
-        </p>
-      </div>
+    <PaperPage>
+      <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-6xl grid-rows-[auto_1fr_auto] gap-10">
+        <PaperMasthead
+          eyebrow="The morning edition"
+          title="What needs attention?"
+          description="A clear desk, a handful of decisions, and the day begins to move."
+          aside={
+            <div className="text-right font-mono text-xs leading-5 text-current/50">
+              <div>{isLoading ? '—' : inboxCount.toString().padStart(2, '0')} in the Inbox</div>
+              <div>{isLoading ? '—' : filterCount.toString().padStart(2, '0')} next actions</div>
+            </div>
+          }
+        />
 
-      <div className="flex gap-3">
-        <Button
-          size="lg"
-          onClick={() => navigate({ to: '/review' })}
-          disabled={isLoading || (inboxCount === 0 && filterCount === 0)}
-          className="text-base px-8 py-6"
-        >
-          Daily Review
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={() => navigate({ to: '/weekly-review' })}
-          disabled={isLoading}
-          className="text-base px-8 py-6 gap-2"
-        >
-          <CalendarRange className="h-5 w-5" />
-          Weekly Review
-        </Button>
-      </div>
+        <div className="grid content-center gap-8 lg:grid-cols-2">
+          <section className="border-t-2 border-orange-700 py-7 dark:border-orange-300 lg:pr-10">
+            <div className="mb-10 flex items-start justify-between gap-6">
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">Today</p>
+                <h2 className="font-serif text-4xl">Daily Review</h2>
+                <p className="mt-3 max-w-md text-sm leading-6 text-current/55">Clear the Inbox, then make one deliberate decision for each next action.</p>
+              </div>
+              <span className="font-serif text-5xl italic text-current/15">01</span>
+            </div>
+            <div className="mb-6 flex gap-5 text-sm text-current/55">
+              <span className="flex items-center gap-1.5"><Inbox className="size-4" />{isLoading ? '—' : inboxCount} inbox</span>
+              <span className="flex items-center gap-1.5"><ListChecks className="size-4" />{isLoading ? '—' : filterCount} tasks</span>
+            </div>
+            <Button
+              size="lg"
+              onClick={() => navigate({ to: '/review' })}
+              disabled={isLoading || (inboxCount === 0 && filterCount === 0)}
+              className="px-7"
+            >
+              Begin today’s review
+            </Button>
+          </section>
 
-      <div className="flex gap-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <Inbox className="h-4 w-4" />
-          {isLoading ? '-' : inboxCount} inbox
+          <section className="border-t border-current/20 py-7 lg:border-l lg:border-t-2 lg:pl-10">
+            <div className="mb-10 flex items-start justify-between gap-6">
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-current/45">The wider view</p>
+                <h2 className="font-serif text-4xl">Weekly Review</h2>
+                <p className="mt-3 max-w-md text-sm leading-6 text-current/55">Step back to inspect projects, someday ideas, and the week ahead.</p>
+              </div>
+              <span className="font-serif text-5xl italic text-current/15">02</span>
+            </div>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate({ to: '/weekly-review' })}
+              disabled={isLoading}
+              className="gap-2 bg-transparent px-7"
+            >
+              <CalendarRange className="size-4" />
+              Open the weekly review
+            </Button>
+          </section>
         </div>
-        <div className="flex items-center gap-1.5">
-          <ListChecks className="h-4 w-4" />
-          {isLoading ? '-' : filterCount} tasks
-        </div>
-      </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground max-w-full">
-        <ListChecks className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate font-mono" title={prefs.filterQuery}>
-          {prefs.filterQuery}
-        </span>
-        <Link
-          to="/settings"
-          className="shrink-0 underline underline-offset-2 hover:text-foreground transition-colors"
-        >
-          edit filter
-        </Link>
+        <footer className="flex flex-col justify-between gap-4 border-t border-current/20 pt-5 text-xs text-current/45 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <ListChecks className="size-3.5 shrink-0" />
+            <span className="truncate font-mono" title={prefs.filterQuery}>{prefs.filterQuery}</span>
+            <Link to="/settings" className="shrink-0 underline underline-offset-2 hover:text-current">edit filter</Link>
+          </div>
+          <Button asChild variant="outline" size="sm" className="bg-transparent text-current/75 hover:text-current">
+            <Link to="/settings">
+              <Settings className="size-3.5" />
+              Settings
+            </Link>
+          </Button>
+        </footer>
       </div>
-
-      <Link
-        to="/settings"
-        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
-      >
-        <Settings className="h-3.5 w-3.5" />
-        Settings
-      </Link>
-    </div>
+    </PaperPage>
   )
 }

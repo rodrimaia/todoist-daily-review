@@ -53,14 +53,16 @@ export function ReviewSummary({
   return (
     <>
       {hasReviewedItems && <Celebration />}
-      <Card className="w-full max-w-md animate-in fade-in duration-200">
+      <Card className="w-full max-w-xl animate-in rounded-none border-x-0 bg-transparent fade-in duration-200">
         <CardHeader>
-          <CardTitle className="text-xl">Review Complete</CardTitle>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-700 dark:text-orange-300">The closing note</p>
+          <CardTitle className="font-serif text-4xl sm:text-5xl">Review complete.</CardTitle>
+          <p className="font-serif text-lg italic text-current/55">The desk is clearer than you found it.</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {inboxTotal > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Inbox ({inboxTotal})</p>
+              <p className="font-serif text-xl">Inbox ({inboxTotal})</p>
               <div className="space-y-1">
                 <StatRow icon={FolderOpen} label="Moved to project" count={inboxStats.moved} />
                 <StatRow icon={Lightbulb} label="Someday/Maybe" count={inboxStats.someday} />
@@ -75,7 +77,7 @@ export function ReviewSummary({
 
           {filterTotal > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Review ({filterTotal})</p>
+              <p className="font-serif text-xl">Next actions ({filterTotal})</p>
               <div className="space-y-1">
                 <StatRow icon={CalendarDays} label="Today" count={filterStats.rescheduledToday} />
                 <StatRow icon={ArrowRight} label="Tomorrow" count={filterStats.rescheduledTomorrow} />

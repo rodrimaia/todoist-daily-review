@@ -19,14 +19,13 @@ import {
   useDeleteTask,
   useCreateProject,
 } from '~/lib/mutations'
-import { TaskCard } from '~/components/TaskCard'
 import { InboxActionBar } from '~/components/InboxActionBar'
 import { FilterActionBar } from '~/components/FilterActionBar'
-import { ReviewProgress } from '~/components/ReviewProgress'
 import { ReviewSummary } from '~/components/ReviewSummary'
-import { Loader2 } from 'lucide-react'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { useTodoistUser } from '~/lib/use-todoist-user'
+import { DailyReviewExperience } from '~/components/DailyReviewExperience'
+import { PaperLoading, PaperMessage, PaperPage } from '~/components/PaperPage'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -248,54 +247,36 @@ export function ReviewPage() {
 
   if (isReadError) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <PaperPage className="grid place-items-center">
         <TodoistReadError
           onRetry={() => void Promise.all([refetchUser(), refetchProjects(), refetchInbox(), refetchFilter()])}
           isRetrying={userFetching || projectsFetching || inboxFetching || filterFetching}
         />
-      </div>
+      </PaperPage>
     )
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PaperLoading label="Preparing today’s review" />
   }
 
   if (state.phase === 'summary') {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
+      <PaperPage className="grid place-items-center">
         <ReviewSummary
           inboxStats={state.inboxStats}
           filterStats={state.filterStats}
           onDone={() => navigate({ to: '/' })}
         />
-      </div>
+      </PaperPage>
     )
   }
 
   if (!currentTask) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">No tasks to review</p>
-      </div>
-    )
+    return <PaperMessage eyebrow="Daily review" title="The desk is clear." />
   }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 gap-6">
-      <ReviewProgress state={state} />
-
-      <TaskCard
-        task={currentTask}
-        projectMap={projectMap}
-        animationKey={`${state.phase}-${state.currentIndex}`}
-      />
-
-      {state.phase === 'inbox' ? (
+  const actions = state.phase === 'inbox' ? (
         <InboxActionBar
           key={currentTask.id}
           projects={projects}
@@ -315,6 +296,7 @@ export function ReviewPage() {
         />
       ) : (
         <FilterActionBar
+          key={currentTask.id}
           onSchedule={handleFilterSchedule}
           onComplete={handleFilterComplete}
           onSkip={handleFilterSkip}
@@ -325,7 +307,14 @@ export function ReviewPage() {
           canDelete={canDelete}
           taskContent={currentTask.content}
         />
-      )}
-    </div>
+      )
+
+  return (
+    <DailyReviewExperience
+      state={state}
+      task={currentTask}
+      projectMap={projectMap}
+      actions={actions}
+    />
   )
 }

@@ -125,6 +125,47 @@
   }
 }
 
+/* ---- Morning Paper visual system ---- */
+
+.morning-paper {
+  --primary: oklch(0.48 0.14 43);
+  --primary-foreground: oklch(0.985 0.01 70);
+  --secondary: oklch(0.91 0.025 75);
+  --secondary-foreground: oklch(0.26 0.02 65);
+  --muted: oklch(0.91 0.02 75);
+  --muted-foreground: oklch(0.48 0.025 65);
+  --accent: oklch(0.88 0.035 70);
+  --accent-foreground: oklch(0.25 0.02 65);
+  --border: oklch(0.72 0.025 70 / 45%);
+  --input: oklch(0.72 0.025 70 / 55%);
+  --ring: oklch(0.55 0.14 43);
+}
+
+.dark .morning-paper {
+  --primary: oklch(0.71 0.13 55);
+  --primary-foreground: oklch(0.18 0.02 55);
+  --secondary: oklch(0.28 0.02 65);
+  --secondary-foreground: oklch(0.94 0.015 75);
+  --muted: oklch(0.27 0.015 65);
+  --muted-foreground: oklch(0.7 0.02 70);
+  --accent: oklch(0.32 0.025 65);
+  --accent-foreground: oklch(0.96 0.01 75);
+  --border: oklch(0.55 0.025 70 / 38%);
+  --input: oklch(0.55 0.025 70 / 48%);
+  --ring: oklch(0.71 0.13 55);
+}
+
+.morning-paper [data-slot='card'] {
+  border-color: color-mix(in oklab, currentColor 18%, transparent);
+  background: color-mix(in oklab, var(--card) 45%, transparent);
+  box-shadow: none;
+}
+
+.morning-paper input:not([type='checkbox']),
+.morning-paper select {
+  background-color: color-mix(in oklab, var(--card) 38%, transparent);
+}
+
 /* ---- Celebration keyframes ---- */
 
 @keyframes confetti-fall {

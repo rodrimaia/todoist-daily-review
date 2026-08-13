@@ -29,9 +29,9 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md rounded-none border-x-0 border-b-0 bg-transparent pt-7">
       <CardHeader>
-        <CardTitle>Connect to Todoist</CardTitle>
+        <CardTitle className="font-serif text-2xl">Connect to Todoist</CardTitle>
         <CardDescription>
           Paste your Todoist API token to start a temporary session. You can
           change or clear it later in Settings.
