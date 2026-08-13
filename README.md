@@ -8,6 +8,13 @@ through a **Daily Review** (clear your Inbox, then work through your next
 actions) and a **Weekly Review** (projects, someday/maybe, and the week ahead)
 — one task at a time, right in your browser.
 
+The workflow is strongly inspired by David Allen's
+[GTD Weekly Review](https://gettingthingsdone.com/2018/08/episode-43-the-power-of-the-gtd-weekly-review/):
+get clear by processing your Inbox, get current by reviewing next actions,
+projects, and upcoming commitments, then get creative by revisiting
+Someday/Maybe. It adapts those ideas into a Todoist-native daily and weekly
+routine; it is not affiliated with or endorsed by the David Allen Company.
+
 Everything you do is applied **directly to your Todoist account, live**: moving,
 scheduling, completing, and deleting. There is no staging area, and no backend
 ever holds a copy of your tasks.
@@ -17,6 +24,14 @@ ever holds a copy of your tasks.
 The easiest way to start is the Hosted instance at
 **[review.rodrigomaia.me](https://review.rodrigomaia.me/)**. It runs the exact
 same code as this repository.
+
+To get started:
+
+1. Follow [Todoist's official guide to find your API
+   token](https://www.todoist.com/help/articles/find-your-api-token-Jpzx9IIlB)
+   (**Settings → Integrations → Developer → Copy API token**).
+2. Open the Hosted instance, paste the token, and connect.
+3. Choose Daily Review or Weekly Review and work through the prompts.
 
 A few honest notes about how the Hosted instance works:
 
@@ -104,7 +119,7 @@ bun run dev
 ```
 
 Open http://localhost:3000, find your
-[Todoist API token](https://todoist.com/help/articles/find-your-api-token-Jpzx9IIlB),
+[Todoist API token](https://www.todoist.com/help/articles/find-your-api-token-Jpzx9IIlB),
 paste it, and go.
 
 ### Build from source
