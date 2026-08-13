@@ -46,6 +46,8 @@ export function WeeklyReviewSummary({
   upcomingStats,
   onDone,
   isProcessing = false,
+  trackingFailure,
+  onFinishWithoutTracking,
 }: {
   inboxStats: InboxStats
   projectStats: ProjectStats
@@ -53,6 +55,8 @@ export function WeeklyReviewSummary({
   upcomingStats: UpcomingStats
   onDone: () => void
   isProcessing?: boolean
+  trackingFailure?: string | null
+  onFinishWithoutTracking?: () => void
 }) {
   const inboxTotal = getInboxTotal(inboxStats)
   const projectTotal = getProjectStatsTotal(projectStats)
@@ -123,9 +127,21 @@ export function WeeklyReviewSummary({
           <p className="text-sm text-muted-foreground">Nothing to review this week.</p>
         )}
 
+        {trackingFailure && (
+          <div className="space-y-2 rounded-md border border-destructive/40 p-3 text-sm">
+            <p className="text-destructive">{trackingFailure}</p>
+            <p className="text-muted-foreground">Your review is complete, but its tracking task was not changed.</p>
+          </div>
+        )}
+
         <Button onClick={onDone} disabled={isProcessing} className="w-full mt-4">
-          {isProcessing ? 'Completing…' : 'Done'}
+          {isProcessing ? 'Completing…' : trackingFailure ? 'Retry' : 'Done'}
         </Button>
+        {trackingFailure && onFinishWithoutTracking && (
+          <Button onClick={onFinishWithoutTracking} disabled={isProcessing} variant="outline" className="w-full">
+            Finish without tracking
+          </Button>
+        )}
       </CardContent>
     </Card>
   )

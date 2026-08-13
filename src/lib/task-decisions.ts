@@ -19,6 +19,16 @@ export function canDeleteTask(task: Pick<Task, 'due'>): boolean {
  *
  * Undated tasks, future dates, and completed tasks are not eligible.
  */
+/** A Review tracking task must be open, recurring, and have due data. */
+export function getReviewTrackingTaskInvalidReason(
+  task: Pick<Task, 'due' | 'completedAt'>,
+): string | null {
+  if (task.completedAt !== null) return 'Review tracking task must be open.'
+  if (!task.due) return 'Review tracking task requires due data.'
+  if (task.due.isRecurring !== true) return 'Review tracking task must recur.'
+  return null
+}
+
 export function isEligibleTrackingOccurrence(
   task: Pick<Task, 'due' | 'completedAt'>,
   reviewDay: string,

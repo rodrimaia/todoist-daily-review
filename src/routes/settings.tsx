@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
@@ -22,7 +22,13 @@ import {
 } from '~/lib/todoist-session'
 import { queryKeys } from '~/lib/query-keys'
 import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check, Loader2 } from 'lucide-react'
+import { getReviewTrackingTaskInvalidReason } from '~/lib/task-decisions'
+import {
+  getReviewTrackingTaskSchedule,
+  getTodoistReadFailureMessage,
+  normalizeReviewTrackingTaskId,
+} from '~/lib/review-tracking-task'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { HostedTelemetrySettings } from '~/components/HostedTelemetry'
 
@@ -37,14 +43,72 @@ export function SettingsPage() {
   const [somedayId, setSomedayId] = useState(() => getPreferences().somedayProjectId ?? '')
   const [excludePrefixes, setExcludePrefixes] = useState(() => getPreferences().excludeProjectPrefixes)
   const [reviewTrackingTaskId, setReviewTrackingTaskId] = useState(() => getPreferences().reviewTrackingTaskId ?? '')
+  const [savedReviewTrackingTaskId, setSavedReviewTrackingTaskId] = useState(
+    () => getPreferences().reviewTrackingTaskId,
+  )
+  const [trackingValidation, setTrackingValidation] = useState<
+    { status: 'idle' | 'pending' } | { status: 'valid'; title: string; schedule: string } | { status: 'invalid' | 'unavailable'; message: string }
+  >({ status: 'idle' })
+  const [validationAttempt, setValidationAttempt] = useState(0)
   const [saved, setSaved] = useState(false)
   const currentAppearance = useAppearance()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
   const hasToken = !!getToken()
+  const normalizedTrackingTaskId = reviewTrackingTaskId.trim()
+    ? normalizeReviewTrackingTaskId(reviewTrackingTaskId)
+    : null
+  const trackingTaskChanged = reviewTrackingTaskId.trim()
+    ? normalizedTrackingTaskId === null || normalizedTrackingTaskId !== savedReviewTrackingTaskId
+    : savedReviewTrackingTaskId !== null
+  const tokenChanged = token.trim() !== (getToken() ?? '')
 
-  const {
+  useEffect(() => {
+    if (!trackingTaskChanged) {
+      setTrackingValidation({ status: 'idle' })
+      return
+    }
+    if (!reviewTrackingTaskId.trim()) {
+      setTrackingValidation({ status: 'idle' })
+      return
+    }
+    if (!normalizedTrackingTaskId) {
+      setTrackingValidation({ status: 'invalid', message: 'Enter a Todoist task ID or official task URL.' })
+      return
+    }
+    if (tokenChanged) {
+      setTrackingValidation({ status: 'unavailable', message: 'Save the account change before validating this task.' })
+      return
+    }
+    if (!hasToken) {
+      setTrackingValidation({ status: 'unavailable', message: 'Add an API token before validating this task.' })
+      return
+    }
+
+    let current = true
+    setTrackingValidation({ status: 'pending' })
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const task = await getTodoistApi().getTask(normalizedTrackingTaskId)
+          const reason = getReviewTrackingTaskInvalidReason(task)
+          if (!current) return
+          setTrackingValidation(reason
+            ? { status: 'invalid', message: reason }
+            : { status: 'valid', title: task.content, schedule: getReviewTrackingTaskSchedule(task) })
+        } catch (error) {
+          if (current) setTrackingValidation({ status: 'unavailable', message: getTodoistReadFailureMessage(error) })
+        }
+      })()
+    }, 500)
+    return () => {
+      current = false
+      window.clearTimeout(timer)
+    }
+  }, [trackingTaskChanged, reviewTrackingTaskId, normalizedTrackingTaskId, tokenChanged, hasToken, validationAttempt])
+
+  const { 
     data: projectsData,
     isError: projectsError,
     isFetching: projectsFetching,
@@ -76,6 +140,7 @@ export function SettingsPage() {
       setTokenState(nextToken)
       setSomedayId(resetPreferences.somedayProjectId ?? '')
       setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
+      setSavedReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId)
     } else if (persistenceChanged) {
       setTodoistTokenPersistence(nextPersistence)
     }
@@ -87,9 +152,10 @@ export function SettingsPage() {
         ? {}
         : {
             somedayProjectId: somedayId || null,
-            reviewTrackingTaskId: reviewTrackingTaskId.trim() || null,
+            reviewTrackingTaskId: normalizedTrackingTaskId,
           }),
     })
+    if (!identityChanged) setSavedReviewTrackingTaskId(normalizedTrackingTaskId)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -101,6 +167,7 @@ export function SettingsPage() {
     setRememberToken(false)
     setSomedayId(resetPreferences.somedayProjectId ?? '')
     setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
+    setSavedReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId)
     await navigate({ to: '/', replace: true })
   }
 
@@ -226,16 +293,32 @@ export function SettingsPage() {
             <Separator />
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Review tracking task ID</label>
+              <label className="text-sm font-medium">Review tracking task</label>
               <Input
                 value={reviewTrackingTaskId}
-                onChange={(e) => setReviewTrackingTaskId(e.target.value)}
-                placeholder="Task ID (optional)"
+                onChange={(e) => {
+                  setReviewTrackingTaskId(e.target.value)
+                  setTrackingValidation({ status: 'pending' })
+                }}
+                placeholder="Task ID or Todoist URL (optional)"
               />
               <p className="text-xs text-muted-foreground">
-                Optional Todoist task ID for a recurring Weekly Review reminder.
-                The task is completed automatically when you finish a Weekly Review.
+                ID or URL of an open, recurring Todoist task with a due date.
               </p>
+              {trackingTaskChanged && trackingValidation.status === 'pending' && (
+                <p className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Validating task…</p>
+              )}
+              {trackingTaskChanged && trackingValidation.status === 'valid' && (
+                <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><Check className="h-3.5 w-3.5" /> Valid: {trackingValidation.title} — {trackingValidation.schedule}</p>
+              )}
+              {trackingTaskChanged && (trackingValidation.status === 'invalid' || trackingValidation.status === 'unavailable') && (
+                <div className="flex items-center gap-2 text-xs text-destructive">
+                  <span>{trackingValidation.message}</span>
+                  {trackingValidation.status === 'unavailable' && !tokenChanged && hasToken && (
+                    <Button type="button" variant="ghost" size="sm" className="h-auto p-0 text-xs" onClick={() => setValidationAttempt((attempt) => attempt + 1)}>Retry validation</Button>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -262,7 +345,11 @@ export function SettingsPage() {
 
             <HostedTelemetrySettings />
 
-            <Button onClick={handleSave} className="w-full">
+            <Button
+              onClick={handleSave}
+              disabled={trackingTaskChanged && !!reviewTrackingTaskId.trim() && trackingValidation.status !== 'valid'}
+              className="w-full"
+            >
               {saved ? 'Saved!' : 'Save'}
             </Button>
           </CardContent>
