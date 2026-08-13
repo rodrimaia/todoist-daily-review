@@ -83,7 +83,7 @@ is one click away in Settings.
   Review Filter phase (default shown above, resettable)
 - **Someday/Maybe project** — where deferred tasks go
 - **Exclude projects** — comma-separated prefixes to skip during the Weekly
-  Review (e.g. `AREA, LISTA`)
+  Review (for example `Archive, Reference`)
 - **Review tracking task** — optional recurring task completed automatically
   when you finish a Weekly Review
 - **Appearance** — system, light, or dark
@@ -132,6 +132,14 @@ docker run -p 3000:3000 ghcr.io/rodrimaia/todoist-daily-review:latest
 
 ### Docker Compose
 
+The repository includes [`compose.yaml`](compose.yaml). Clone it and run:
+
+```bash
+docker compose up -d
+```
+
+Or save this equivalent configuration as `compose.yaml`:
+
 ```yaml
 services:
   todoist-daily-review:
@@ -141,13 +149,16 @@ services:
     restart: unless-stopped
 ```
 
-## Checks
+Then open http://localhost:3000. Stop it with `docker compose down`.
+
+## Validation
+
+Install the locked dependencies, then run the tests, typecheck, and production
+build:
 
 ```bash
-bun test
-bun run test:telemetry-browser
-bun run typecheck
-bun run build
+bun install --frozen-lockfile
+bun run validate
 ```
 
 ## Contributing

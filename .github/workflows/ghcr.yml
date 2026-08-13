@@ -1,31 +1,52 @@
-name: Build and Push to GHCR
+name: Validate and publish
 
 on:
+  pull_request:
   push:
     branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: validate-and-publish-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
+  validate:
+    name: Release validation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Test, typecheck, and build
+        run: bun run validate
+
+  publish:
+    name: Publish validated release image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
+      - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -33,6 +54,15 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
