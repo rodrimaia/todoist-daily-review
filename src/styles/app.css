@@ -166,6 +166,26 @@
   background-color: color-mix(in oklab, var(--card) 38%, transparent);
 }
 
+/* ---- Loading and transitions ---- */
+
+@keyframes paper-skeleton-pulse {
+  50% { opacity: 0.45; }
+}
+
+.paper-skeleton {
+  background: color-mix(in oklab, currentColor 14%, transparent);
+  animation: paper-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.content-enter {
+  animation: content-enter 180ms ease-out both;
+}
+
+@keyframes content-enter {
+  from { opacity: 0; transform: translateY(0.4rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ---- Celebration keyframes ---- */
 
 @keyframes confetti-fall {
@@ -275,5 +295,11 @@
 @media (prefers-reduced-motion: reduce) {
   .celebration-overlay {
     display: none;
+  }
+  .paper-skeleton,
+  .content-enter,
+  .animate-in,
+  .animate-spin {
+    animation: none !important;
   }
 }

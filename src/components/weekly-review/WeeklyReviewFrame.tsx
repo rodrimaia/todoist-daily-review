@@ -63,7 +63,7 @@ export function WeeklyReviewFrame({
             ) : undefined
           }
         />
-        <div className="grid content-center justify-items-center gap-6 pb-8">{children}</div>
+        <div key={state.phase} className="content-enter grid content-center justify-items-center gap-6 pb-8">{children}</div>
       </div>
     </PaperPage>
   )

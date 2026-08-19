@@ -12,6 +12,7 @@ import { Inbox, ListChecks, Settings, CalendarRange } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { PaperMasthead, PaperPage } from '~/components/PaperPage'
+import { Skeleton } from '~/components/Skeleton'
 
 export function Home() {
   const [hasToken, setHasToken] = useState(() => !!getToken())
@@ -76,6 +77,8 @@ function Dashboard() {
   const inboxCount = inboxData?.results?.length ?? 0
   const filterCount = filterData?.results?.length ?? 0
   const isLoading = inboxLoading || filterLoading
+  const inboxCountPending = inboxLoading && !inboxData
+  const filterCountPending = filterLoading && !filterData
 
   if (inboxError || filterError) {
     return (
@@ -97,8 +100,8 @@ function Dashboard() {
           description="A clear desk, a handful of decisions, and the day begins to move."
           aside={
             <div className="text-right font-mono text-xs leading-5 text-current/50">
-              <div>{isLoading ? '—' : inboxCount.toString().padStart(2, '0')} in the Inbox</div>
-              <div>{isLoading ? '—' : filterCount.toString().padStart(2, '0')} next actions</div>
+              <div className="flex justify-end gap-1">{inboxCountPending ? <Skeleton className="mt-1 h-3 w-5" /> : inboxCount.toString().padStart(2, '0')} in the Inbox</div>
+              <div className="flex justify-end gap-1">{filterCountPending ? <Skeleton className="mt-1 h-3 w-5" /> : filterCount.toString().padStart(2, '0')} next actions</div>
             </div>
           }
         />
@@ -114,8 +117,8 @@ function Dashboard() {
               <span className="font-serif text-5xl italic text-current/15">01</span>
             </div>
             <div className="mb-6 flex gap-5 text-sm text-current/55">
-              <span className="flex items-center gap-1.5"><Inbox className="size-4" />{isLoading ? '—' : inboxCount} inbox</span>
-              <span className="flex items-center gap-1.5"><ListChecks className="size-4" />{isLoading ? '—' : filterCount} tasks</span>
+              <span className="flex items-center gap-1.5"><Inbox className="size-4" />{inboxCountPending ? <Skeleton className="h-4 w-6" /> : inboxCount} inbox</span>
+              <span className="flex items-center gap-1.5"><ListChecks className="size-4" />{filterCountPending ? <Skeleton className="h-4 w-6" /> : filterCount} tasks</span>
             </div>
             <Button
               size="lg"

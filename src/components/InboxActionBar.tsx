@@ -20,6 +20,7 @@ import {
   SkipForward,
   Square,
   ArrowLeft,
+  Loader2,
 } from 'lucide-react'
 
 type Project = PersonalProject | WorkspaceProject
@@ -41,6 +42,7 @@ export function InboxActionBar({
   onCreateProject,
   canSkip = true,
   canDelete = true,
+  isCreatingProject = false,
 }: {
   projects: Project[]
   task: Task
@@ -56,6 +58,7 @@ export function InboxActionBar({
   onCreateProject: (name: string) => Promise<Project>
   canSkip?: boolean
   canDelete?: boolean
+  isCreatingProject?: boolean
 }) {
   const [step, setStep] = useState<Step>('pick-project')
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
@@ -145,7 +148,7 @@ export function InboxActionBar({
     return (
       <div className="w-full max-w-md space-y-3">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={resetStep} className="h-8 w-8 shrink-0">
+          <Button variant="ghost" size="icon" onClick={resetStep} disabled={isCreatingProject} className="h-8 w-8 shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <p className="text-sm font-medium">New Project</p>
@@ -162,14 +165,16 @@ export function InboxActionBar({
             ref={inputRef}
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
+            disabled={isCreatingProject}
             placeholder="Project name..."
             className="h-9"
             onKeyDown={(e) => {
               if (e.key === 'Escape') resetStep()
             }}
           />
-          <Button type="submit" size="sm" disabled={!projectName.trim()} className="h-9">
-            Create
+          <Button type="submit" size="sm" disabled={!projectName.trim() || isCreatingProject} aria-busy={isCreatingProject} className="h-9">
+            {isCreatingProject && <Loader2 className="size-3 animate-spin" />}
+            {isCreatingProject ? 'Creating…' : 'Create'}
           </Button>
         </form>
       </div>
@@ -184,6 +189,7 @@ export function InboxActionBar({
         onCreateNew={handleCreateNew}
         onNewProject={handleNewProject}
         onCancel={() => {}}
+        disabled={isCreatingProject}
       />
       <div className="flex flex-wrap gap-2">
         {somedayProjectId && (

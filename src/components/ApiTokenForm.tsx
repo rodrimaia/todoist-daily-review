@@ -10,6 +10,7 @@ import { isHostedTelemetryInstance } from '~/lib/telemetry'
 export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
   const [value, setValue] = useState('')
   const [rememberToken, setRememberToken] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [hostname] = useState(() =>
     typeof window === 'undefined' ? '' : window.location.hostname,
   )
@@ -20,12 +21,17 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
     e.preventDefault()
     const trimmed = value.trim()
     if (!trimmed) return
-    await replaceTodoistToken(
-      queryClient,
-      trimmed,
-      rememberToken ? 'remembered' : 'temporary',
-    )
-    onSaved()
+    setIsConnecting(true)
+    try {
+      await replaceTodoistToken(
+        queryClient,
+        trimmed,
+        rememberToken ? 'remembered' : 'temporary',
+      )
+      onSaved()
+    } finally {
+      setIsConnecting(false)
+    }
   }
 
   return (
@@ -46,14 +52,16 @@ export function ApiTokenForm({ onSaved }: { onSaved: () => void }) {
             placeholder="Paste your API token"
             value={value}
             onChange={(e) => setValue(e.target.value)}
+            disabled={isConnecting}
           />
           <TokenPersistenceChoice
             id="connect-remember-token"
             remembered={rememberToken}
             onRememberedChange={setRememberToken}
+            disabled={isConnecting}
           />
-          <Button type="submit" disabled={!value.trim()}>
-            Connect to Todoist
+          <Button type="submit" disabled={!value.trim() || isConnecting} aria-busy={isConnecting}>
+            {isConnecting ? 'Connecting…' : 'Connect to Todoist'}
           </Button>
         </form>
 

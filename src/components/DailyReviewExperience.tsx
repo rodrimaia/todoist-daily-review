@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import type { PersonalProject, Task, WorkspaceProject } from '@doist/todoist-sdk'
 import { Calendar, Folder, Repeat2, Tag } from 'lucide-react'
 import type { ReviewState } from '~/lib/review-machine'
@@ -55,6 +55,11 @@ export function DailyReviewExperience({
   const current = state.currentIndex + 1
   const percent = total === 0 ? 0 : (state.currentIndex / total) * 100
   const phaseLabel = state.phase === 'inbox' ? 'Inbox' : 'Next actions'
+  const taskTitleRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    taskTitleRef.current?.focus({ preventScroll: true })
+  }, [task.id, state.phase])
 
   return (
     <main className="morning-paper min-h-screen bg-[#f4efe6] px-5 py-8 text-[#29251f] dark:bg-[#1c1b18] dark:text-[#f6f0e7] sm:px-10 sm:py-12">
@@ -86,13 +91,15 @@ export function DailyReviewExperience({
         </header>
 
         <div className="grid items-center gap-10 pb-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,.65fr)] lg:gap-20">
-          <article className="relative max-w-3xl" aria-labelledby="current-task-title">
+          <article key={`${state.phase}-${task.id}`} className="content-enter relative max-w-3xl" aria-labelledby="current-task-title">
             <div className="mb-8 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-current/45">
               <span>On your desk</span>
               <span className="h-px flex-1 bg-current/20" />
             </div>
             <h1
               id="current-task-title"
+              ref={taskTitleRef}
+              tabIndex={-1}
               className="text-balance font-serif text-4xl leading-[1.08] tracking-[-0.025em] sm:text-6xl lg:text-7xl"
             >
               {task.content}
