@@ -25,7 +25,7 @@ import { ReviewSummary } from '~/components/ReviewSummary'
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { useTodoistUser } from '~/lib/use-todoist-user'
 import { DailyReviewExperience } from '~/components/DailyReviewExperience'
-import { PaperLoading, PaperMessage, PaperPage } from '~/components/PaperPage'
+import { DailyReviewSkeleton, PaperMessage, PaperPage } from '~/components/PaperPage'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -257,7 +257,7 @@ export function ReviewPage() {
   }
 
   if (isLoading) {
-    return <PaperLoading label="Preparing today’s review" />
+    return <DailyReviewSkeleton />
   }
 
   if (state.phase === 'summary') {
@@ -293,6 +293,7 @@ export function ReviewPage() {
           onCreateProject={handleCreateProject}
           canSkip={canSkip}
           canDelete={canDelete}
+          isCreatingProject={createProject.isPending}
         />
       ) : (
         <FilterActionBar

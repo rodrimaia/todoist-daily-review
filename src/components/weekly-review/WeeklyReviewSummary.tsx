@@ -65,7 +65,7 @@ export function WeeklyReviewSummary({
   const grandTotal = inboxTotal + projectTotal + somedayTotal + upcomingTotal
 
   return (
-    <Card className="w-full max-w-xl animate-in rounded-none border-x-0 bg-transparent fade-in duration-200">
+    <Card className="content-enter w-full max-w-xl rounded-none border-x-0 bg-transparent">
       <CardHeader>
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-700 dark:text-orange-300">Filed for the week</p>
         <CardTitle className="font-serif text-4xl sm:text-5xl">Weekly Review complete.</CardTitle>

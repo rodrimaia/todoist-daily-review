@@ -34,7 +34,7 @@ import { WeeklyReviewSummary } from '~/components/weekly-review/WeeklyReviewSumm
 import { TodoistReadError } from '~/components/TodoistReadError'
 import { useTodoistUser } from '~/lib/use-todoist-user'
 import { WeeklyReviewFrame } from '~/components/weekly-review/WeeklyReviewFrame'
-import { PaperLoading, PaperMessage, PaperPage } from '~/components/PaperPage'
+import { PaperMessage, PaperPage, WeeklyReviewSkeleton } from '~/components/PaperPage'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -416,7 +416,7 @@ export function WeeklyReviewPage() {
   }
 
   if (isLoading) {
-    return <PaperLoading label="Preparing the weekly review" />
+    return <WeeklyReviewSkeleton />
   }
 
   if (state.phase === 'summary') {
@@ -554,6 +554,7 @@ export function WeeklyReviewPage() {
           onStop={handleStop}
           onCreateProject={handleCreateProject}
           canSkip={canSkipInboxTask}
+          isCreatingProject={createProject.isPending}
         />
       </div>
     </WeeklyReviewFrame>

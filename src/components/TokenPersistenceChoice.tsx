@@ -2,6 +2,7 @@ interface TokenPersistenceChoiceProps {
   id: string
   remembered: boolean
   onRememberedChange: (remembered: boolean) => void
+  disabled?: boolean
 }
 
 const TODOIST_TOKEN_HELP_URL =
@@ -11,6 +12,7 @@ export function TokenPersistenceChoice({
   id,
   remembered,
   onRememberedChange,
+  disabled = false,
 }: TokenPersistenceChoiceProps) {
   const descriptionId = `${id}-description`
 
@@ -23,6 +25,7 @@ export function TokenPersistenceChoice({
           checked={remembered}
           aria-describedby={descriptionId}
           onChange={(event) => onRememberedChange(event.target.checked)}
+          disabled={disabled}
           className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
         />
         <span>Remember this token on this device</span>

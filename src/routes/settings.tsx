@@ -50,6 +50,8 @@ export function SettingsPage() {
   >({ status: 'idle' })
   const [validationAttempt, setValidationAttempt] = useState(0)
   const [saved, setSaved] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isClearingToken, setIsClearingToken] = useState(false)
   const currentAppearance = useAppearance()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -109,6 +111,7 @@ export function SettingsPage() {
 
   const { 
     data: projectsData,
+    isLoading: projectsLoading,
     isError: projectsError,
     isFetching: projectsFetching,
     refetch: refetchProjects,
@@ -124,6 +127,8 @@ export function SettingsPage() {
   const projects = (projectsData?.results ?? []) as Project[]
 
   async function handleSave() {
+    setIsSaving(true)
+    try {
     const nextToken = token.trim()
     const currentToken = getToken()
     const nextPersistence = rememberToken ? 'remembered' : 'temporary'
@@ -157,9 +162,14 @@ export function SettingsPage() {
     if (!identityChanged) setSavedReviewTrackingTaskId(normalizedTrackingTaskId)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function handleClearToken() {
+    setIsClearingToken(true)
+    try {
     await replaceTodoistToken(queryClient, null)
     const resetPreferences = getPreferences()
     setTokenState('')
@@ -168,6 +178,9 @@ export function SettingsPage() {
     setReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId ?? '')
     setSavedReviewTrackingTaskId(resetPreferences.reviewTrackingTaskId)
     await navigate({ to: '/', replace: true })
+    } finally {
+      setIsClearingToken(false)
+    }
   }
 
   const handleAppearanceChange = useCallback(
@@ -223,9 +236,11 @@ export function SettingsPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleClearToken}
+                    disabled={isSaving || isClearingToken}
+                    aria-busy={isClearingToken}
                     className="border-destructive/35 bg-transparent text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    Clear token
+                    {isClearingToken ? 'Clearing…' : 'Clear token'}
                   </Button>
                 )}
               </div>
@@ -278,9 +293,11 @@ export function SettingsPage() {
                       id="settings-someday"
                       value={somedayId}
                       onChange={(e) => setSomedayId(e.target.value)}
+                      disabled={projectsLoading && !projectsData}
+                      aria-busy={projectsLoading && !projectsData}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     >
-                      <option value="">None</option>
+                      <option value="">{projectsLoading && !projectsData ? 'Loading projects…' : 'None'}</option>
                       {projects.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
@@ -379,11 +396,12 @@ export function SettingsPage() {
             <div className="border-t border-current/20 py-8">
               <Button
                 onClick={handleSave}
-                disabled={trackingTaskChanged && !!reviewTrackingTaskId.trim() && trackingValidation.status !== 'valid'}
+                disabled={isSaving || isClearingToken || (trackingTaskChanged && !!reviewTrackingTaskId.trim() && trackingValidation.status !== 'valid')}
+                aria-busy={isSaving}
                 size="lg"
                 className="w-full"
               >
-                {saved ? 'Saved!' : 'Save settings'}
+                {isSaving ? 'Saving…' : saved ? 'Saved!' : 'Save settings'}
               </Button>
             </div>
           </div>

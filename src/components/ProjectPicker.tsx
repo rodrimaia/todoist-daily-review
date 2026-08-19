@@ -18,12 +18,14 @@ export function ProjectPicker({
   onCreateNew,
   onNewProject,
   onCancel,
+  disabled = false,
 }: {
   projects: Project[]
   onSelect: (project: Project) => void
   onCreateNew: (name: string) => void
   onNewProject: () => void
   onCancel: () => void
+  disabled?: boolean
 }) {
   const [search, setSearch] = useState('')
 
@@ -42,6 +44,7 @@ export function ProjectPicker({
         <CommandEmpty>
           {search.trim() ? (
             <button
+              disabled={disabled}
               onClick={() => onCreateNew(search.trim())}
               className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-accent rounded cursor-pointer"
             >
@@ -56,6 +59,7 @@ export function ProjectPicker({
           <CommandItem
             value="__new_project__"
             onSelect={onNewProject}
+            disabled={disabled}
             className="cursor-pointer text-primary"
             forceMount
           >
@@ -67,6 +71,7 @@ export function ProjectPicker({
               key={project.id}
               value={project.name}
               onSelect={() => onSelect(project)}
+              disabled={disabled}
               className="cursor-pointer"
             >
               {project.name}
