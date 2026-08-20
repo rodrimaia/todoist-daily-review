@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { Task } from '@doist/todoist-sdk'
 import { Button } from '~/components/ui/button'
+import { isEligibleReviewShortcut } from '~/lib/review-shortcuts'
 import {
   CalendarDays,
   ArrowRight,
@@ -129,7 +130,7 @@ export function DatePicker({
 }) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+      if (!isEligibleReviewShortcut(event)) return
       const option = options.find(({ shortcut }) => shortcut === event.key.toLowerCase())
       if (option) onSelect(option)
     }

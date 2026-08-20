@@ -26,6 +26,7 @@ import { TodoistReadError } from '~/components/TodoistReadError'
 import { useTodoistUser } from '~/lib/use-todoist-user'
 import { DailyReviewExperience } from '~/components/DailyReviewExperience'
 import { DailyReviewSkeleton, PaperMessage, PaperPage } from '~/components/PaperPage'
+import { isEligibleReviewShortcut } from '~/lib/review-shortcuts'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -211,7 +212,7 @@ export function ReviewPage() {
     if (state.phase === 'summary') return
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (!isEligibleReviewShortcut(e)) return
 
       switch (e.key) {
         case 'c':

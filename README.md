@@ -84,9 +84,9 @@ is one click away in Settings.
 
 ### Other niceties
 
-- **Keyboard shortcuts** — during date selection, `k` keeps the current date,
-  `0` removes it, and `1`–`4` choose quick dates; `c` completes, `d` deletes,
-  and `s` skips recurring tasks
+- **Keyboard shortcuts** — unmodified keys only: during date selection, `k` keeps
+  the current date, `0` removes it, and `1`–`4` choose quick dates; `c` completes,
+  `d` deletes, and `s` skips recurring tasks
 - **Progress tracking** — see how far along you are in each review phase
 - **Summary stats** — a breakdown of all actions taken at the end of each review
 - **Honest failure handling** — write failures stay visible for verification in

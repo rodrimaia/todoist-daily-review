@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import type { PersonalProject, Task, WorkspaceProject } from '@doist/todoist-sdk'
 import { Calendar, Folder, Repeat2, Tag } from 'lucide-react'
 import type { ReviewState } from '~/lib/review-machine'
+import { TaskInformation } from '~/components/TaskInformation'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -96,19 +97,15 @@ export function DailyReviewExperience({
               <span>On your desk</span>
               <span className="h-px flex-1 bg-current/20" />
             </div>
-            <h1
-              id="current-task-title"
-              ref={taskTitleRef}
-              tabIndex={-1}
-              className="text-balance font-serif text-4xl leading-[1.08] tracking-[-0.025em] sm:text-6xl lg:text-7xl"
-            >
-              {task.content}
-            </h1>
-            {task.description && (
-              <p className="mt-7 max-w-2xl border-l-2 border-orange-600/60 pl-5 font-serif text-lg leading-8 text-current/65 sm:text-xl">
-                {task.description}
-              </p>
-            )}
+            <div id="current-task-title">
+              <TaskInformation
+                title={task.content}
+                description={task.description}
+                titleRef={taskTitleRef}
+                titleClassName="text-balance font-serif text-4xl leading-[1.08] tracking-[-0.025em] sm:text-6xl lg:text-7xl"
+                descriptionClassName="mt-7 max-w-2xl whitespace-pre-wrap border-l-2 border-orange-600/60 pl-5 font-serif text-lg leading-8 text-current/65 sm:text-xl"
+              />
+            </div>
             <div className="mt-8">
               <TaskMetadata task={task} projectMap={projectMap} />
             </div>

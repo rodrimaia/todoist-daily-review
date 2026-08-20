@@ -3,6 +3,7 @@ import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
 import { Calendar, FolderOpen, Repeat } from 'lucide-react'
 import { isAfter, isBefore, startOfDay, parseISO, format, isEqual, addDays } from 'date-fns'
+import { TaskInformation } from '~/components/TaskInformation'
 
 type Project = PersonalProject | WorkspaceProject
 
@@ -46,12 +47,12 @@ export function TaskCard({
       className="w-full max-w-2xl animate-in rounded-none border-x-0 bg-transparent fade-in slide-in-from-right-4 duration-150"
     >
       <CardContent className="p-6 space-y-3">
-        <p className="font-serif text-3xl leading-snug sm:text-4xl">{task.content}</p>
-        {task.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {task.description}
-          </p>
-        )}
+        <TaskInformation
+          title={task.content}
+          description={task.description}
+          titleClassName="font-serif text-3xl leading-snug sm:text-4xl"
+          descriptionClassName="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed"
+        />
         <div className="flex flex-wrap items-center gap-2">
           {project && (
             <Badge variant="secondary" className="gap-1 font-normal">
