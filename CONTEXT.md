@@ -42,6 +42,14 @@ _Avoid_: Browser day, local day
 The outcome chosen for the current task before advancing to the next task.
 _Avoid_: Action
 
+**Task title**:
+The primary text that identifies a Todoist task during a review.
+_Avoid_: Task content
+
+**Task description**:
+Optional supporting text that adds detail beneath the Task title.
+_Avoid_: Task body
+
 **Delete**:
 A task decision that permanently removes the current non-recurring task from Todoist. Recurring tasks are not eligible during a Daily Review.
 
