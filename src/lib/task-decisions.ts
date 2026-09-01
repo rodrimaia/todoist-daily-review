@@ -9,8 +9,12 @@ export function canSkipTask(task: Pick<Task, 'due'>): boolean {
   return task.due?.isRecurring === true
 }
 
-export function canDeleteTask(task: Pick<Task, 'due'>): boolean {
+export function canBulkDisposeTask(task: Pick<Task, 'due'>): boolean {
   return task.due?.isRecurring !== true
+}
+
+export function canDeleteTask(task: Pick<Task, 'due'>): boolean {
+  return canBulkDisposeTask(task)
 }
 
 /**

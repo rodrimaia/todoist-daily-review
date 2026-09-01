@@ -12,6 +12,9 @@ import {
   Plus,
   Play,
   Eye,
+  Archive,
+  Repeat2,
+  AlertTriangle,
 } from 'lucide-react'
 import type { InboxStats } from '~/lib/review-machine'
 import { getInboxTotal } from '~/lib/review-machine'
@@ -94,6 +97,16 @@ export function WeeklyReviewSummary({
               <StatRow icon={Eye} label="Reviewed" count={projectStats.reviewed} />
               <StatRow icon={Plus} label="Tasks added" count={projectStats.tasksAdded} />
               <StatRow icon={Trash2} label="Projects deleted" count={projectStats.projectsDeleted} />
+              <StatRow icon={Archive} label="Projects archived" count={projectStats.projectsArchived} />
+              <StatRow icon={Eye} label="Tasks kept open" count={projectStats.tasksKeptOpen} />
+              <StatRow icon={Check} label="Tasks completed" count={projectStats.tasksCompleted} />
+              <StatRow icon={Trash2} label="Tasks permanently deleted" count={projectStats.tasksDeleted} />
+              <StatRow
+                icon={Repeat2}
+                label="Recurring branches preserved"
+                count={projectStats.recurringBranchesPreserved}
+              />
+              <StatRow icon={AlertTriangle} label="Archive operation failures" count={projectStats.failures} />
               <StatRow icon={SkipForward} label="Skipped" count={projectStats.skipped} />
             </div>
           </div>

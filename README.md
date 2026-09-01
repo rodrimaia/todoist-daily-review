@@ -61,11 +61,13 @@ your someday/maybe project. Ends with a summary of everything you did.
 ### Weekly Review
 
 Five phases: **Inbox** (clear any remaining Inbox), **Projects** (check every
-active project for next actions; add or delete projects), **Someday** (review
-your someday/maybe list), **Upcoming** (reschedule, complete, or un-date the
-next week of scheduled tasks while preserving recurring schedules), and
-**Summary**. Optionally complete a recurring "review tracking" task when you
-finish.
+active project for next actions; add, delete empty projects, or archive projects
+while keeping, completing, or permanently deleting eligible open tasks),
+**Someday** (review your someday/maybe list), **Upcoming** (reschedule, complete,
+or un-date the next week of scheduled tasks while preserving recurring
+schedules), and **Summary**. Project archive preserves any branch containing a
+recurring task and is unavailable for projects with subprojects. Optionally
+complete a recurring "review tracking" task when you finish.
 
 ### The review filter
 

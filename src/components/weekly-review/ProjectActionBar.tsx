@@ -1,27 +1,47 @@
 import { useState } from 'react'
 import { Button } from '~/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
-import { Check, Plus, Trash2, SkipForward, Square } from 'lucide-react'
+import { Archive, Check, Plus, Trash2, SkipForward, Square } from 'lucide-react'
+import type { ProjectArchiveTaskChoice } from '~/lib/project-archive'
 import type { ProjectWithTasks } from '~/lib/weekly-review-machine'
+import { ProjectArchiveConfirmation } from './ProjectArchiveConfirmation'
 
 export function ProjectActionBar({
   projectWithTasks,
   onOk,
   onAddTask,
   onDeleteProject,
+  onArchiveProject = () => {},
   onSkip,
   onStop,
+  isArchiving = false,
 }: {
   projectWithTasks: ProjectWithTasks
   onOk: () => void
   onAddTask: (content: string) => void
   onDeleteProject: () => void
+  onArchiveProject?: (choice: ProjectArchiveTaskChoice) => void | Promise<void>
   onSkip: () => void
   onStop: () => void
+  isArchiving?: boolean
 }) {
   const [adding, setAdding] = useState(false)
   const [taskContent, setTaskContent] = useState('')
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [archiveChoice, setArchiveChoice] = useState<ProjectArchiveTaskChoice | null>(null)
+  const [submittingArchive, setSubmittingArchive] = useState(false)
   const isEmpty = projectWithTasks.tasks.length === 0
+  const subprojectCount = projectWithTasks.subprojectCount ?? 0
+  const hasSubprojects = subprojectCount > 0
+  const archiveIsProcessing = isArchiving || submittingArchive
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -29,6 +49,24 @@ export function ProjectActionBar({
     onAddTask(taskContent.trim())
     setTaskContent('')
     setAdding(false)
+  }
+
+  function handleArchiveOpenChange(open: boolean) {
+    if (archiveIsProcessing) return
+    setArchiveOpen(open)
+    if (!open) setArchiveChoice(null)
+  }
+
+  async function handleArchiveConfirm(choice: ProjectArchiveTaskChoice) {
+    if (archiveIsProcessing || hasSubprojects) return
+    setSubmittingArchive(true)
+    try {
+      await onArchiveProject(choice)
+      setArchiveOpen(false)
+      setArchiveChoice(null)
+    } finally {
+      setSubmittingArchive(false)
+    }
   }
 
   if (adding) {
@@ -87,6 +125,36 @@ export function ProjectActionBar({
             <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">d</kbd>
           </Button>
         )}
+        <Dialog open={archiveOpen} onOpenChange={handleArchiveOpenChange}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={hasSubprojects}
+              className="gap-1.5"
+              title={hasSubprojects ? 'Projects with subprojects must be reviewed independently' : undefined}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              Archive Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent showCloseButton={!archiveIsProcessing}>
+            <DialogHeader>
+              <DialogTitle>Project archive</DialogTitle>
+              <DialogDescription>
+                Choose what happens to the project&apos;s open tasks before archiving it.
+              </DialogDescription>
+            </DialogHeader>
+            <ProjectArchiveConfirmation
+              projectWithTasks={projectWithTasks}
+              choice={archiveChoice}
+              onChoiceChange={setArchiveChoice}
+              onCancel={() => handleArchiveOpenChange(false)}
+              onConfirm={handleArchiveConfirm}
+              isProcessing={archiveIsProcessing}
+            />
+          </DialogContent>
+        </Dialog>
         <Button variant="ghost" size="sm" onClick={onSkip} className="gap-1.5 text-muted-foreground">
           <SkipForward className="h-3.5 w-3.5" />
           Skip
@@ -98,6 +166,12 @@ export function ProjectActionBar({
           <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">esc</kbd>
         </Button>
       </div>
+      {hasSubprojects && (
+        <p className="text-xs text-amber-700 dark:text-amber-300" role="status">
+          Project archive unavailable: {subprojectCount}{' '}
+          {subprojectCount === 1 ? 'subproject must' : 'subprojects must'} be reviewed independently.
+        </p>
+      )}
     </div>
   )
 }

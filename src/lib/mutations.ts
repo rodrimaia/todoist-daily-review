@@ -2,6 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTodoistApi } from './todoist'
 import { invalidateTodoistCache } from './todoist-cache'
 import { queryKeys } from './query-keys'
+import {
+  archiveProjectWithTaskDisposition,
+  type ProjectArchiveApi,
+  type ProjectArchiveInput,
+  type ProjectArchiveResult,
+} from './project-archive'
 
 function useInvalidateTodoistCache(queryKey: readonly unknown[]) {
   const queryClient = useQueryClient()
@@ -130,5 +136,37 @@ export function useDeleteProject() {
       invalidateProjects()
       invalidateTasks()
     },
+  })
+}
+
+interface ProjectArchiveMutationDependencies {
+  api: ProjectArchiveApi
+  invalidateProjects: () => void
+  invalidateTasks: () => void
+}
+
+/** Project archive mutation boundary, exported so API ordering and cache policy stay testable. */
+export async function runProjectArchiveMutation(
+  input: ProjectArchiveInput,
+  dependencies: ProjectArchiveMutationDependencies,
+): Promise<ProjectArchiveResult> {
+  try {
+    return await archiveProjectWithTaskDisposition(dependencies.api, input)
+  } finally {
+    dependencies.invalidateProjects()
+    dependencies.invalidateTasks()
+  }
+}
+
+export function useArchiveProjectWithTaskDisposition() {
+  const invalidateProjects = useInvalidateTodoistCache(queryKeys.projects)
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
+
+  return useMutation({
+    mutationFn: (input: ProjectArchiveInput) => runProjectArchiveMutation(input, {
+      api: getTodoistApi(),
+      invalidateProjects,
+      invalidateTasks,
+    }),
   })
 }

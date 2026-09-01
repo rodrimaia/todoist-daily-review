@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 import type { Task } from '@doist/todoist-sdk'
-import { canChangeTaskDueDate, canDeleteTask, isEligibleTrackingOccurrence } from './task-decisions'
+import {
+  canBulkDisposeTask,
+  canChangeTaskDueDate,
+  canDeleteTask,
+  isEligibleTrackingOccurrence,
+} from './task-decisions'
 
 function taskWithRecurrence(isRecurring: boolean): Pick<Task, 'due'> {
   return { due: { isRecurring } } as Pick<Task, 'due'>
@@ -26,6 +31,16 @@ describe('due-date decision eligibility', () => {
       expect(canChangeTaskDueDate(taskWithRecurrence(false))).toBe(true)
     })
   }
+})
+
+describe('bulk task disposition eligibility', () => {
+  test('blocks a Recurring task from bulk completion or deletion', () => {
+    expect(canBulkDisposeTask(taskWithRecurrence(true))).toBe(false)
+  })
+
+  test('allows a non-recurring task to be handled in bulk', () => {
+    expect(canBulkDisposeTask(taskWithRecurrence(false))).toBe(true)
+  })
 })
 
 describe('delete eligibility', () => {
