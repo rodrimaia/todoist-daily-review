@@ -2,7 +2,7 @@ import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
-import { getTodoistApi } from '~/lib/todoist'
+import { getAllActiveProjects, getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate, canDeleteTask, canSkipTask } from '~/lib/task-decisions'
@@ -52,10 +52,7 @@ export function ReviewPage() {
     refetch: refetchProjects,
   } = useQuery({
     queryKey: queryKeys.projects,
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getProjects()
-    },
+    queryFn: () => getAllActiveProjects(),
   })
 
   const {

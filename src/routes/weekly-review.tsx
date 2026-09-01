@@ -2,7 +2,7 @@ import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
-import { getTodoistApi } from '~/lib/todoist'
+import { getAllActiveProjects, getTodoistApi } from '~/lib/todoist'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate, canSkipTask, getReviewTrackingTaskInvalidReason, isEligibleTrackingOccurrence } from '~/lib/task-decisions'
@@ -23,7 +23,9 @@ import {
   useCreateProject,
   useAddTask,
   useDeleteProject,
+  useArchiveProjectWithTaskDisposition,
 } from '~/lib/mutations'
+import type { ProjectArchiveTaskChoice } from '~/lib/project-archive'
 import { TaskCard } from '~/components/TaskCard'
 import { InboxActionBar } from '~/components/InboxActionBar'
 import { UpcomingReviewCard } from '~/components/weekly-review/UpcomingReviewCard'
@@ -64,10 +66,7 @@ export function WeeklyReviewPage() {
     refetch: refetchProjects,
   } = useQuery({
     queryKey: queryKeys.projects,
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getProjects()
-    },
+    queryFn: () => getAllActiveProjects(),
   })
 
   const {
@@ -163,19 +162,29 @@ export function WeeklyReviewPage() {
       // Group all tasks by projectId
       const tasksByProject = new Map<string, Task[]>()
       for (const task of allTasksData) {
-        if (excludeTaskId && task.id === excludeTaskId) continue
         const list = tasksByProject.get(task.projectId) ?? []
         list.push(task)
         tasksByProject.set(task.projectId, list)
+      }
+
+      const subprojectCountByParentId = new Map<string, number>()
+      for (const project of projects) {
+        if (!('parentId' in project) || !project.parentId) continue
+        subprojectCountByParentId.set(
+          project.parentId,
+          (subprojectCountByParentId.get(project.parentId) ?? 0) + 1,
+        )
       }
 
       // Build project review list from reviewable projects.
       // Exclude the tracking task from each project's task list before
       // calculating hasNextAction.
       const projectsWithTasks: ProjectWithTasks[] = reviewableProjects.map((project) => {
-        const tasks = tasksByProject.get(project.id) ?? []
+        const archiveTasks = tasksByProject.get(project.id) ?? []
+        const tasks = archiveTasks.filter((task) => !excludeTaskId || task.id !== excludeTaskId)
         const hasNextAction = tasks.some((t) => t.labels.includes('next_action'))
-        return { project, tasks, hasNextAction }
+        const subprojectCount = subprojectCountByParentId.get(project.id) ?? 0
+        return { project, tasks, archiveTasks, hasNextAction, subprojectCount }
       })
 
       // Someday tasks from the someday project
@@ -203,6 +212,7 @@ export function WeeklyReviewPage() {
   const createProject = useCreateProject()
   const addTask = useAddTask()
   const deleteProject = useDeleteProject()
+  const archiveProject = useArchiveProjectWithTaskDisposition()
 
   const currentTask = getWeeklyCurrentTask(state)
   const currentProject = getWeeklyCurrentProject(state)
@@ -276,10 +286,21 @@ export function WeeklyReviewPage() {
   )
 
   const handleProjectDelete = useCallback(() => {
-    if (!currentProject) return
+    if (!currentProject || currentProject.tasks.length > 0) return
     deleteProject.mutate(currentProject.project.id)
     dispatch({ type: 'PROJECT_ACTION', action: 'deleted_project' })
   }, [currentProject, deleteProject])
+
+  const handleProjectArchive = useCallback(async (choice: ProjectArchiveTaskChoice) => {
+    if (!currentProject || (currentProject.subprojectCount ?? 0) > 0) return
+    const projectId = currentProject.project.id
+    const result = await archiveProject.mutateAsync({
+      projectId,
+      choice,
+      tasks: currentProject.archiveTasks ?? currentProject.tasks,
+    })
+    dispatch({ type: 'PROJECT_ACTION', action: 'archive', projectId, result })
+  }, [currentProject, archiveProject])
 
   const handleProjectSkip = useCallback(() => {
     dispatch({ type: 'PROJECT_ACTION', action: 'skip' })
@@ -489,8 +510,10 @@ export function WeeklyReviewPage() {
             onOk={handleProjectOk}
             onAddTask={handleProjectAddTask}
             onDeleteProject={handleProjectDelete}
+            onArchiveProject={handleProjectArchive}
             onSkip={handleProjectSkip}
             onStop={handleStop}
+            isArchiving={archiveProject.isPending}
           />
         </div>
       </WeeklyReviewFrame>

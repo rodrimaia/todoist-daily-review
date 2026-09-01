@@ -72,5 +72,20 @@ _Avoid_: Remove date
 A session command that ends the Daily Review without making a task decision for the current task.
 _Avoid_: Skip
 
+**Project archive**:
+A Weekly Review project decision that archives an active project after its confirmed task disposition is attempted. It is unavailable when the project has Subprojects.
+_Avoid_: Complete project
+
+**Project archive task choice**:
+The confirmed choice to keep open tasks unchanged, complete eligible non-recurring task branches, or permanently delete eligible non-recurring task branches before Project archive. A branch containing a Recurring task is preserved in full.
+_Avoid_: Remove tasks, complete project
+
+**Subtask**:
+An open task whose Todoist parent relationship places it beneath another task. Project archive scope includes Subtasks at every depth.
+_Avoid_: Subissue
+
+**Subproject**:
+An active personal project whose Todoist parent relationship places it beneath another project. A parent with Subprojects cannot use Project archive; each Subproject remains an independent review item.
+
 **Recurring task**:
 A task whose Todoist due data explicitly identifies it as recurring. A review must not reschedule it or remove its date; completing it is what advances the recurrence.

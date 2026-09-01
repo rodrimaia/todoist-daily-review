@@ -13,7 +13,7 @@ import {
   type Appearance,
 } from '~/lib/storage'
 import { updateAppearance, useAppearance } from '~/lib/use-appearance'
-import { getTodoistApi } from '~/lib/todoist'
+import { getAllActiveProjects, getTodoistApi } from '~/lib/todoist'
 import {
   replaceTodoistToken,
   setTodoistTokenPersistence,
@@ -117,10 +117,7 @@ export function SettingsPage() {
     refetch: refetchProjects,
   } = useQuery({
     queryKey: queryKeys.projects,
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getProjects()
-    },
+    queryFn: () => getAllActiveProjects(),
     enabled: hasToken,
   })
 

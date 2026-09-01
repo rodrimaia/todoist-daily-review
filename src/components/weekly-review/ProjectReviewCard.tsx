@@ -38,7 +38,7 @@ export function ProjectReviewCard({
   projectWithTasks: ProjectWithTasks
   animationKey: string | number
 }) {
-  const { project, tasks, hasNextAction } = projectWithTasks
+  const { project, tasks, hasNextAction, subprojectCount = 0 } = projectWithTasks
   const isEmpty = tasks.length === 0
 
   return (
@@ -52,14 +52,26 @@ export function ProjectReviewCard({
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
             {project.name}
           </CardTitle>
-          {!isEmpty && (
-            <Badge variant={hasNextAction ? 'secondary' : 'destructive'} className="text-xs">
-              {hasNextAction ? 'Has next action' : 'No next action'}
-            </Badge>
-          )}
+          <div className="flex flex-wrap justify-end gap-2">
+            {subprojectCount > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {subprojectCount} {subprojectCount === 1 ? 'subproject' : 'subprojects'}
+              </Badge>
+            )}
+            {!isEmpty && (
+              <Badge variant={hasNextAction ? 'secondary' : 'destructive'} className="text-xs">
+                {hasNextAction ? 'Has next action' : 'No next action'}
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-1">
+        {subprojectCount > 0 && (
+          <p className="pb-2 text-xs text-amber-700 dark:text-amber-300">
+            This project cannot use Project archive while it has subprojects. Review each subproject independently.
+          </p>
+        )}
         {isEmpty ? (
           <p className="text-sm text-muted-foreground">This project has no tasks.</p>
         ) : (
