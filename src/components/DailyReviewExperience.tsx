@@ -11,6 +11,8 @@ interface DailyReviewExperienceProps {
   task: Task
   projectMap: Map<string, Project>
   actions: ReactNode
+  onRename: (title: string) => Promise<void>
+  renameShortcutVersion: number
 }
 
 function TaskMetadata({
@@ -50,6 +52,8 @@ export function DailyReviewExperience({
   task,
   projectMap,
   actions,
+  onRename,
+  renameShortcutVersion,
 }: DailyReviewExperienceProps) {
   const tasks = state.phase === 'inbox' ? state.inboxTasks : state.filterTasks
   const total = tasks.length
@@ -102,6 +106,8 @@ export function DailyReviewExperience({
                 title={task.content}
                 description={task.description}
                 titleRef={taskTitleRef}
+                onRename={onRename}
+                renameShortcutVersion={renameShortcutVersion}
                 titleClassName="text-balance font-serif text-4xl leading-[1.08] tracking-[-0.025em] sm:text-6xl lg:text-7xl"
                 descriptionClassName="mt-7 max-w-2xl whitespace-pre-wrap border-l-2 border-orange-600/60 pl-5 font-serif text-lg leading-8 text-current/65 sm:text-xl"
               />

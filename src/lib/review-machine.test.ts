@@ -31,6 +31,23 @@ describe('daily review reducer', () => {
     expect(getInboxTotal(state.inboxStats)).toBe(1)
   })
 
+  test('renames the current task without advancing or recording a decision', () => {
+    const shared = { ...task('shared'), content: 'Before' }
+    let state = reviewReducer(initialState, {
+      type: 'START',
+      inboxTasks: [shared],
+      filterTasks: [shared],
+    })
+
+    state = reviewReducer(state, { type: 'RENAME_TASK', taskId: 'shared', content: 'After' })
+
+    expect(getCurrentTask(state)?.content).toBe('After')
+    expect(state.filterTasks[0]?.content).toBe('After')
+    expect(state.currentIndex).toBe(0)
+    expect(getInboxTotal(state.inboxStats)).toBe(0)
+    expect(getFilterTotal(state.filterStats)).toBe(0)
+  })
+
   test('keeps a skipped Inbox task eligible for Filter review', () => {
     const shared = task('shared')
     shared.due = { date: '2030-01-01', string: 'every day', isRecurring: true }

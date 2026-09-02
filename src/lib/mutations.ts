@@ -65,6 +65,19 @@ export function useScheduleTask() {
   })
 }
 
+export async function runRenameTaskMutation(taskId: string, content: string): Promise<void> {
+  const api = getTodoistApi()
+  await api.updateTask(taskId, { content })
+}
+
+export function useRenameTask() {
+  const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
+  return useMutation({
+    mutationFn: ({ taskId, content }: { taskId: string; content: string }) => runRenameTaskMutation(taskId, content),
+    onSuccess: invalidateTasks,
+  })
+}
+
 export function useCompleteTask() {
   const invalidateTasks = useInvalidateTodoistCache(queryKeys.tasks)
   return useMutation({
