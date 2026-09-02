@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
-import { Check, Copy, X } from 'lucide-react'
+import { Check, Copy, Pencil, X } from 'lucide-react'
 import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
 import { formatTaskTextForClipboard, parseTaskText } from '~/lib/task-information'
 
 type CopyState = 'idle' | 'success' | 'error'
@@ -61,16 +62,43 @@ export function TaskInformation({
   titleClassName,
   descriptionClassName,
   titleRef,
+  onRename,
+  renameShortcutVersion = 0,
 }: {
   title: string
   description?: string
   titleClassName: string
   descriptionClassName: string
   titleRef?: RefObject<HTMLHeadingElement | null>
+  onRename?: (title: string) => Promise<void>
+  renameShortcutVersion?: number
 }) {
   const [copyState, setCopyState] = useState<{ field: 'title' | 'description'; state: CopyState } | null>(null)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [editedTitle, setEditedTitle] = useState(title)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [renameSucceeded, setRenameSucceeded] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const renameInputRef = useRef<HTMLInputElement>(null)
+  const handledShortcutVersion = useRef(renameShortcutVersion)
   useEffect(() => () => clearTimeout(timer.current), [])
+
+  const startRename = () => {
+    setEditedTitle(title)
+    setRenameError(null)
+    setIsRenaming(true)
+  }
+
+  useEffect(() => {
+    if (renameShortcutVersion === handledShortcutVersion.current) return
+    handledShortcutVersion.current = renameShortcutVersion
+    if (onRename) startRename()
+  }, [renameShortcutVersion]) // The version changes only when the global shortcut is pressed.
+
+  useEffect(() => {
+    if (isRenaming) renameInputRef.current?.focus()
+  }, [isRenaming])
 
   const copy = async (field: 'title' | 'description', text: string) => {
     const succeeded = await copyText(formatTaskTextForClipboard(text))
@@ -80,11 +108,73 @@ export function TaskInformation({
   }
   const stateFor = (field: 'title' | 'description'): CopyState => copyState?.field === field ? copyState.state : 'idle'
 
+  const cancelRename = () => {
+    setIsRenaming(false)
+    setEditedTitle(title)
+    setRenameError(null)
+  }
+
+  const saveRename = async () => {
+    const nextTitle = editedTitle
+    if (!nextTitle.trim()) {
+      setRenameError('Task title cannot be empty.')
+      return
+    }
+    if (nextTitle === title) {
+      cancelRename()
+      return
+    }
+    if (!onRename) return
+
+    setIsSaving(true)
+    setRenameError(null)
+    try {
+      await onRename(nextTitle)
+      setIsRenaming(false)
+      setRenameSucceeded(true)
+      clearTimeout(timer.current)
+      timer.current = setTimeout(() => setRenameSucceeded(false), 3000)
+    } catch {
+      setRenameError("Couldn't rename task. Your edited title is still available.")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <>
       <div className="flex items-start gap-1">
-        <h1 ref={titleRef} tabIndex={titleRef ? -1 : undefined} className={titleClassName}><TaskText text={title} /></h1>
-        <CopyButton field="title" state={stateFor('title')} onCopy={() => void copy('title', title)} />
+        {isRenaming ? (
+          <form className="flex w-full flex-wrap items-start gap-2" onSubmit={(event) => { event.preventDefault(); void saveRename() }}>
+            <div className="min-w-0 flex-1">
+              <label className="sr-only" htmlFor="task-title-editor">Task title</label>
+              <Input
+                ref={renameInputRef}
+                id="task-title-editor"
+                value={editedTitle}
+                onChange={(event) => { setEditedTitle(event.target.value); setRenameError(null) }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault()
+                    cancelRename()
+                  }
+                }}
+                aria-invalid={Boolean(renameError)}
+                aria-describedby={renameError ? 'task-title-error' : undefined}
+                disabled={isSaving}
+              />
+              {renameError && <p id="task-title-error" className="mt-1 text-sm text-destructive">{renameError}</p>}
+            </div>
+            <Button type="submit" size="sm" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save'}</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={cancelRename} disabled={isSaving}>Cancel</Button>
+          </form>
+        ) : (
+          <>
+            <h1 ref={titleRef} tabIndex={titleRef ? -1 : undefined} className={titleClassName}><TaskText text={title} /></h1>
+            {onRename && <Button type="button" variant="ghost" size="sm" className="shrink-0 gap-1" onClick={startRename}><Pencil aria-hidden="true" />Rename</Button>}
+            <CopyButton field="title" state={stateFor('title')} onCopy={() => void copy('title', title)} />
+          </>
+        )}
       </div>
       {description && (
         <div className="flex items-start gap-1">
@@ -95,6 +185,7 @@ export function TaskInformation({
       <span className="sr-only" aria-live="polite">
         {copyState && (copyState.state === 'success' ? `Task ${copyState.field} copied` : "Couldn't copy")}
       </span>
+      {renameSucceeded && <div role="status" className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-lg border bg-background px-4 py-3 text-sm font-medium shadow-lg">Task renamed</div>}
     </>
   )
 }

@@ -45,6 +45,7 @@ export type ReviewAction =
   | { type: 'START'; inboxTasks: Task[]; filterTasks: Task[] }
   | { type: 'INBOX_ACTION'; taskId: string; action: InboxDecisionType }
   | { type: 'FILTER_ACTION'; taskId: string; action: FilterDecisionType; dueString?: string }
+  | { type: 'RENAME_TASK'; taskId: string; content: string }
   | { type: 'STOP' }
 
 function emptyInboxStats(): InboxStats {
@@ -145,6 +146,15 @@ export function reviewReducer(state: ReviewState, action: ReviewAction): ReviewS
         case 'skip': stats.skipped++; break
       }
       return advanceOrTransition({ ...state, filterStats: stats })
+    }
+
+    case 'RENAME_TASK': {
+      const rename = (task: Task) => task.id === action.taskId ? { ...task, content: action.content } : task
+      return {
+        ...state,
+        inboxTasks: state.inboxTasks.map(rename),
+        filterTasks: state.filterTasks.map(rename),
+      }
     }
 
     case 'STOP':

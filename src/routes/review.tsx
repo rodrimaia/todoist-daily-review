@@ -18,6 +18,7 @@ import {
   useCompleteTask,
   useDeleteTask,
   useCreateProject,
+  useRenameTask,
 } from '~/lib/mutations'
 import { InboxActionBar } from '~/components/InboxActionBar'
 import { FilterActionBar } from '~/components/FilterActionBar'
@@ -35,6 +36,7 @@ export function ReviewPage() {
   const prefs = getPreferences()
   const [state, dispatch] = useReducer(reviewReducer, initialState)
   const [started, setStarted] = useState(false)
+  const [renameShortcutVersion, setRenameShortcutVersion] = useState(0)
 
   const {
     data: user,
@@ -103,6 +105,7 @@ export function ReviewPage() {
   const completeTask = useCompleteTask()
   const deleteTask = useDeleteTask()
   const createProject = useCreateProject()
+  const renameTask = useRenameTask()
 
   const currentTask = getCurrentTask(state)
   const canSkip = currentTask ? canSkipTask(currentTask) : false
@@ -192,6 +195,13 @@ export function ReviewPage() {
     dispatch({ type: 'FILTER_ACTION', taskId: currentTask.id, action: 'delete' })
   }, [currentTask, deleteTask, claimTaskDecision])
 
+  const handleRename = useCallback(async (content: string) => {
+    if (!currentTask) return
+    // Keep the review on this task while its title is updated remotely.
+    dispatch({ type: 'RENAME_TASK', taskId: currentTask.id, content })
+    await renameTask.mutateAsync({ taskId: currentTask.id, content })
+  }, [currentTask, renameTask])
+
   const handleStop = useCallback(() => {
     dispatch({ type: 'STOP' })
   }, [])
@@ -223,6 +233,9 @@ export function ReviewPage() {
           break
         case 'm':
           // handled by InboxActionBar internally
+          break
+        case 'r':
+          setRenameShortcutVersion((version) => version + 1)
           break
         case 'Escape':
           handleStop()
@@ -314,6 +327,8 @@ export function ReviewPage() {
       task={currentTask}
       projectMap={projectMap}
       actions={actions}
+      onRename={handleRename}
+      renameShortcutVersion={renameShortcutVersion}
     />
   )
 }
