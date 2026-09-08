@@ -50,6 +50,21 @@ _Avoid_: Task content
 Optional supporting text that adds detail beneath the Task title.
 _Avoid_: Task body
 
+**Subtask**:
+A Todoist task nested beneath another task in the same project, including nested descendants at any depth.
+_Avoid_: Subissue
+
+**Subproject**:
+A project nested beneath another project; it is reviewed and acted on independently from the parent project's tasks and subtasks.
+
+**Project archive**:
+A Weekly Review decision that, after confirmation, archives a project and explicitly chooses whether its open non-recurring tasks are kept open, completed, or deleted.
+_Avoid_: Complete project, archive subtasks
+
+**Project archive task choice**:
+The selected treatment of open non-recurring tasks during a Project archive: keep open, complete, or delete. Recurring task branches are preserved, and a project with subprojects is not eligible for this bulk decision.
+_Avoid_: Remove tasks
+
 **Delete**:
 A task decision that permanently removes the current non-recurring task from Todoist. Recurring tasks are not eligible during a Daily Review.
 
