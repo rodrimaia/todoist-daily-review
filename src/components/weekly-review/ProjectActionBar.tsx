@@ -10,7 +10,10 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Archive, Check, Plus, Trash2, SkipForward, Square } from 'lucide-react'
-import type { ProjectArchiveTaskChoice } from '~/lib/project-archive'
+import {
+  buildProjectArchivePlan,
+  type ProjectArchiveTaskChoice,
+} from '~/lib/project-archive'
 import type { ProjectWithTasks } from '~/lib/weekly-review-machine'
 import { ProjectArchiveConfirmation } from './ProjectArchiveConfirmation'
 
@@ -41,6 +44,9 @@ export function ProjectActionBar({
   const isEmpty = projectWithTasks.tasks.length === 0
   const subprojectCount = projectWithTasks.subprojectCount ?? 0
   const hasSubprojects = subprojectCount > 0
+  const hasOpenArchiveTasks = buildProjectArchivePlan(
+    projectWithTasks.archiveTasks ?? projectWithTasks.tasks,
+  ).activeTaskCount > 0
   const archiveIsProcessing = isArchiving || submittingArchive
 
   function handleSubmit(e: React.FormEvent) {
@@ -125,36 +131,50 @@ export function ProjectActionBar({
             <kbd className="ml-1 text-[10px] text-muted-foreground bg-muted px-1 rounded">d</kbd>
           </Button>
         )}
-        <Dialog open={archiveOpen} onOpenChange={handleArchiveOpenChange}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={hasSubprojects}
-              className="gap-1.5"
-              title={hasSubprojects ? 'Projects with subprojects must be reviewed independently' : undefined}
-            >
-              <Archive className="h-3.5 w-3.5" />
-              Archive Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent showCloseButton={!archiveIsProcessing}>
-            <DialogHeader>
-              <DialogTitle>Project archive</DialogTitle>
-              <DialogDescription>
-                Choose what happens to the project&apos;s open tasks before archiving it.
-              </DialogDescription>
-            </DialogHeader>
-            <ProjectArchiveConfirmation
-              projectWithTasks={projectWithTasks}
-              choice={archiveChoice}
-              onChoiceChange={setArchiveChoice}
-              onCancel={() => handleArchiveOpenChange(false)}
-              onConfirm={handleArchiveConfirm}
-              isProcessing={archiveIsProcessing}
-            />
-          </DialogContent>
-        </Dialog>
+        {hasOpenArchiveTasks ? (
+          <Dialog open={archiveOpen} onOpenChange={handleArchiveOpenChange}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={hasSubprojects}
+                className="gap-1.5"
+                title={hasSubprojects ? 'Projects with subprojects must be reviewed independently' : undefined}
+              >
+                <Archive className="h-3.5 w-3.5" />
+                Archive Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={!archiveIsProcessing}>
+              <DialogHeader>
+                <DialogTitle>Project archive</DialogTitle>
+                <DialogDescription>
+                  Choose what happens to the project&apos;s open tasks before archiving it.
+                </DialogDescription>
+              </DialogHeader>
+              <ProjectArchiveConfirmation
+                projectWithTasks={projectWithTasks}
+                choice={archiveChoice}
+                onChoiceChange={setArchiveChoice}
+                onCancel={() => handleArchiveOpenChange(false)}
+                onConfirm={handleArchiveConfirm}
+                isProcessing={archiveIsProcessing}
+              />
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={hasSubprojects || archiveIsProcessing}
+            onClick={() => void handleArchiveConfirm('keep_open')}
+            className="gap-1.5"
+            title={hasSubprojects ? 'Projects with subprojects must be reviewed independently' : undefined}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archive Project
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onSkip} className="gap-1.5 text-muted-foreground">
           <SkipForward className="h-3.5 w-3.5" />
           Skip

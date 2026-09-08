@@ -192,9 +192,28 @@ describe('Project action regression and Subproject eligibility', () => {
     expect(markup).toContain('OK')
     expect(markup).toContain('Add Task')
     expect(markup).toContain('Archive Project')
+    expect(markup).toContain('data-slot="dialog-trigger"')
     expect(markup).toContain('Skip')
     expect(markup).toContain('Stop')
     expect(markup).not.toContain('Delete Project')
+  })
+
+  test('archives a Project with no open tasks without opening the task-choice dialog', () => {
+    const markup = renderActions(projectWithTasks(personalProject(), []))
+
+    expect(markup).toContain('Archive Project')
+    expect(markup).not.toContain('data-slot="dialog-trigger"')
+    expect(markup).not.toContain('aria-haspopup="dialog"')
+  })
+
+  test('still asks for a task choice when the archive scope contains a hidden open task', () => {
+    const project = projectWithTasks(personalProject(), [])
+    project.archiveTasks = [task('review-tracking-task', null, true)]
+
+    const markup = renderActions(project)
+
+    expect(markup).toContain('data-slot="dialog-trigger"')
+    expect(markup).toContain('aria-haspopup="dialog"')
   })
 
   test('keeps empty Project deletion and marks parents ineligible for Project archive', () => {
