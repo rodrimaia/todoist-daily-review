@@ -1,19 +1,19 @@
-import {
-  TodoistApi,
-  type PersonalProject,
-  type WorkspaceProject,
-} from '@doist/todoist-sdk'
+import type { PersonalProject, WorkspaceProject } from '@doist/todoist-sdk'
+import { TodoistAdapter, type TodoistPort } from '../../packages/todoist/src/index'
 import { getToken } from './storage'
 
-let apiInstance: TodoistApi | null = null
+let apiInstance: TodoistPort | null = null
 let currentToken: string | null = null
 
-export function getTodoistApi(): TodoistApi {
-  const token = getToken()
+/**
+ * Browser compatibility boundary. Callers may provide a token explicitly in
+ * tests or in a future client; the Web app defaults to its browser session.
+ */
+export function getTodoistApi(token = getToken()): TodoistPort {
   if (!token) throw new Error('No API token configured')
 
   if (!apiInstance || currentToken !== token) {
-    apiInstance = new TodoistApi(token)
+    apiInstance = new TodoistAdapter(token)
     currentToken = token
   }
 
