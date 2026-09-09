@@ -4,5 +4,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@todoist-review/todoist": "workspace:*",
+    "@doist/todoist-sdk": "8.0.0"
   }
 }

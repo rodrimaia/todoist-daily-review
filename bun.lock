@@ -37,6 +37,10 @@
     },
     "packages/review": {
       "name": "@todoist-review/review",
+      "dependencies": {
+        "@doist/todoist-sdk": "8.0.0",
+        "@todoist-review/todoist": "workspace:*",
+      },
     },
     "packages/todoist": {
       "name": "@todoist-review/todoist",
