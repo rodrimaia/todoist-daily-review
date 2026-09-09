@@ -134,6 +134,19 @@ bun run build
 The static site is written to `dist/` — serve it with any static file server
 (`python3 -m http.server`, nginx, GitHub Pages, ...).
 
+### Terminal release artifacts
+
+The release gate validates the Web and Terminal workspace surfaces, the shared
+Review scenarios, and the Terminal compile before packaging. A tagged commit
+packages macOS ARM64/x64 and Linux ARM64/x64 Terminal archives from that same
+commit, with a SHA-256 checksum beside each archive. Windows x64 remains
+deferred until its native OpenTUI/Bun packaging smoke check is reliable.
+
+Terminal configuration is direct-to-Todoist: `TODOIST_API_TOKEN` takes
+precedence over the documented TOML file at
+`~/.config/todoist-review/config.toml`, and `--config PATH` selects an isolated
+file. The Terminal client never accepts a raw token argument.
+
 ### Docker
 
 Build and run from source:

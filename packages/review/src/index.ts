@@ -94,7 +94,8 @@ export function confirmDailyReviewAction(state: DailyReviewState, confirmed: boo
 }
 
 export function failDailyReviewAction(state: DailyReviewState, error: unknown): DailyReviewState {
-  return { ...state, phase: 'error', failedPhase: state.phase === 'error' ? state.failedPhase : state.phase, status: 'failed', error: error instanceof Error ? error.message : String(error) }
+  const failedPhase = state.phase === 'inbox' || state.phase === 'filter' ? state.phase : state.failedPhase
+  return { ...state, phase: 'error', failedPhase, status: 'failed', error: error instanceof Error ? error.message : String(error) }
 }
 
 export function retryDailyReviewAction(state: DailyReviewState): DailyReviewState {
@@ -210,7 +211,7 @@ export async function applyWeeklyReviewAction(api: TodoistPort, action: WeeklyRe
   if (action.type === 'schedule') { await api.updateTask(action.taskId, { dueString: action.dueString ?? 'no date' }); return }
   if (action.type === 'rename') { await api.updateTask(action.taskId, { content: action.content }); return }
   if (action.type === 'delete_project') { await api.deleteProject(action.projectId); return }
-  await api.archiveProject(action.projectId)
+  if (action.type === 'archive_project') { await api.archiveProject(action.projectId); return }
 }
 
 /** A UI-independent lifecycle for the five-step terminal Weekly Review. */

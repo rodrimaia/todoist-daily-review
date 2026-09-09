@@ -2,7 +2,8 @@ import { useReducer, useEffect, useCallback, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
-import { getAllActiveProjects, getTodoistApi } from '~/lib/todoist'
+import { getTodoistApi } from '~/lib/todoist'
+import { loadDailyReview } from '@todoist-review/review'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate, canDeleteTask, canSkipTask } from '~/lib/task-decisions'
@@ -47,58 +48,30 @@ export function ReviewPage() {
   } = useTodoistUser()
 
   const {
-    data: projectsData,
-    isLoading: projectsLoading,
-    isError: projectsError,
-    isFetching: projectsFetching,
-    refetch: refetchProjects,
+    data: dailyData,
+    isLoading: dailyLoading,
+    isError: dailyError,
+    isFetching: dailyFetching,
+    refetch: refetchDaily,
   } = useQuery({
-    queryKey: queryKeys.projects,
-    queryFn: () => getAllActiveProjects(),
+    queryKey: ['review', 'daily', prefs.filterQuery] as const,
+    queryFn: () => loadDailyReview(getTodoistApi(), prefs.filterQuery),
   })
 
-  const {
-    data: inboxData,
-    isLoading: inboxLoading,
-    isError: inboxError,
-    isFetching: inboxFetching,
-    refetch: refetchInbox,
-  } = useQuery({
-    queryKey: queryKeys.inboxTasks,
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getTasksByFilter({ query: '#Inbox' })
-    },
-  })
+  const isLoading = userLoading || dailyLoading
+  const isReadError = userError || dailyError
 
-  const {
-    data: filterData,
-    isLoading: filterLoading,
-    isError: filterError,
-    isFetching: filterFetching,
-    refetch: refetchFilter,
-  } = useQuery({
-    queryKey: queryKeys.filterTasks(prefs.filterQuery),
-    queryFn: async () => {
-      const api = getTodoistApi()
-      return api.getTasksByFilter({ query: prefs.filterQuery })
-    },
-  })
-
-  const isLoading = userLoading || projectsLoading || inboxLoading || filterLoading
-  const isReadError = userError || projectsError || inboxError || filterError
-
-  const projects = (projectsData?.results ?? []) as Project[]
+  const projects = (dailyData?.projects ?? []) as Project[]
   const projectMap = new Map<string, Project>(projects.map((p) => [p.id, p]))
 
   useEffect(() => {
-    if (!isLoading && !isReadError && !started && inboxData && filterData !== undefined) {
-      const inboxTasks = inboxData.results ?? []
-      const filterTasks = filterData.results ?? []
+    if (!isLoading && !isReadError && !started && dailyData) {
+      const inboxTasks = dailyData.inboxTasks
+      const filterTasks = dailyData.filterTasks
       dispatch({ type: 'START', inboxTasks, filterTasks })
       setStarted(true)
     }
-  }, [isLoading, isReadError, started, inboxData, filterData])
+  }, [isLoading, isReadError, started, dailyData])
 
   const moveTask = useMoveTask()
   const scheduleTask = useScheduleTask()
@@ -260,8 +233,8 @@ export function ReviewPage() {
     return (
       <PaperPage className="grid place-items-center">
         <TodoistReadError
-          onRetry={() => void Promise.all([refetchUser(), refetchProjects(), refetchInbox(), refetchFilter()])}
-          isRetrying={userFetching || projectsFetching || inboxFetching || filterFetching}
+          onRetry={() => void Promise.all([refetchUser(), refetchDaily()])}
+          isRetrying={userFetching || dailyFetching}
         />
       </PaperPage>
     )
