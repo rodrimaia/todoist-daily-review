@@ -15,6 +15,7 @@
     "validate": "bun run test && bun run test:telemetry-browser && bun run typecheck && bun run build",
     "validate:workspaces": "bun scripts/validate-workspaces.ts",
     "parity:check": "bun scripts/parity-check.ts",
+    "test:review-scenarios": "bun test packages/review/src apps/tui/src",
     "release:gate": "bun scripts/release-gate.ts",
     "package:release": "bun scripts/package-release.ts",
     "tui:smoke": "bun test apps/tui/src/main.test.ts && bun run --cwd apps/tui build"

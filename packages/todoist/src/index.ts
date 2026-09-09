@@ -108,6 +108,7 @@ export class InMemoryTodoistAdapter implements TodoistPort {
   readonly tasks: Task[]
   readonly projects: TodoistProject[]
   readonly calls: Array<{ method: string; args: unknown[] }> = []
+  #nextId = 1
 
   constructor(data: InMemoryTodoistData = {}) {
     this.user = data.user
@@ -128,12 +129,43 @@ export class InMemoryTodoistAdapter implements TodoistPort {
   async getTasks(args?: { cursor?: string }) { this.#record('getTasks', args); return this.#page(this.tasks, args?.cursor) }
   async getTasksByFilter(args: { query: string; cursor?: string }) { this.#record('getTasksByFilter', args); return this.#page(this.tasks, args.cursor) }
   async getProjects(args?: { cursor?: string }) { this.#record('getProjects', args); return this.#page(this.projects, args?.cursor) }
-  async addTask(args: Record<string, unknown>): Promise<Task> { this.#record('addTask', args); throw new Error('InMemoryTodoistAdapter.addTask requires a task factory in a scenario') }
+  async addTask(args: Record<string, unknown>): Promise<Task> {
+    this.#record('addTask', args)
+    const task = {
+      id: String(args.id ?? `memory-task-${this.#nextId++}`),
+      content: String(args.content ?? ''),
+      description: String(args.description ?? ''),
+      projectId: String(args.projectId ?? 'inbox'),
+      sectionId: String(args.sectionId ?? ''),
+      parentId: String(args.parentId ?? ''),
+      labels: Array.isArray(args.labels) ? args.labels : [],
+      due: null,
+      completedAt: null,
+      checked: false,
+      isDeleted: false,
+    } as unknown as Task
+    this.tasks.push(task)
+    return task
+  }
   async updateTask(id: string, args: Record<string, unknown>) { this.#record('updateTask', id, args); const task = await this.getTask(id); Object.assign(task, args); return task }
   async moveTask(id: string, args: { projectId?: string; sectionId?: string; parentId?: string }) { this.#record('moveTask', id, args); const task = await this.getTask(id); if (args.projectId) task.projectId = args.projectId; return task }
   async closeTask(id: string) { this.#record('closeTask', id); const task = await this.getTask(id); task.completedAt = new Date().toISOString(); return true }
   async deleteTask(id: string) { this.#record('deleteTask', id); const index = this.tasks.findIndex((task) => task.id === id); if (index < 0) return false; this.tasks.splice(index, 1); return true }
-  async addProject(_args: Record<string, unknown>): Promise<TodoistProject> { this.#record('addProject', _args); throw new Error('InMemoryTodoistAdapter.addProject requires a project factory in a scenario') }
+  async addProject(args: Record<string, unknown>): Promise<TodoistProject> {
+    this.#record('addProject', args)
+    const project = {
+      id: String(args.id ?? `memory-project-${this.#nextId++}`),
+      name: String(args.name ?? 'New project'),
+      color: String(args.color ?? 'charcoal'),
+      parentId: args.parentId ? String(args.parentId) : null,
+      order: Number(args.order ?? this.projects.length),
+      inboxProject: false,
+      isArchived: false,
+      isFavorite: false,
+    } as unknown as TodoistProject
+    this.projects.push(project)
+    return project
+  }
   async updateProject(id: string, args: Record<string, unknown>) { this.#record('updateProject', id, args); const project = this.projects.find((item) => item.id === id); if (!project) throw new Error(`Project ${id} not found`); Object.assign(project, args); return project }
   async deleteProject(id: string) { this.#record('deleteProject', id); const index = this.projects.findIndex((project) => project.id === id); if (index < 0) return false; this.projects.splice(index, 1); return true }
   async archiveProject(id: string) { this.#record('archiveProject', id); const project = this.projects.find((item) => item.id === id); if (!project) throw new Error(`Project ${id} not found`); return project }

@@ -9,7 +9,7 @@ export type ReviewClientKind = 'web' | 'terminal'
 
 import type { PersonalProject, Task, WorkspaceProject } from '@doist/todoist-sdk'
 import { getAllPages, type TodoistPort, type TodoistProject } from '@todoist-review/todoist'
-import { archiveProjectWithTaskDisposition, type ProjectArchiveResult, type ProjectArchiveTaskChoice } from '../../../src/lib/project-archive'
+import { archiveProjectWithTaskDisposition, type ProjectArchiveResult, type ProjectArchiveTaskChoice } from './project-archive'
 
 export interface DailyReviewSnapshot {
   inboxTasks: Task[]
@@ -77,7 +77,17 @@ export function currentDailyReviewTask(state: DailyReviewState): Task | undefine
 }
 
 export function advanceDailyReview(state: DailyReviewState, action: DailyReviewAction): DailyReviewState {
-  const next = { ...state, actions: [...state.actions, action], pending: undefined, error: undefined, status: 'ready' as DailyReviewStatus, index: state.index + 1 }
+  const next = {
+    ...state,
+    actions: [...state.actions, action],
+    pending: undefined,
+    error: undefined,
+    status: 'ready' as DailyReviewStatus,
+    index: state.index + 1,
+    // The Inbox query is also allowed to match the configured filter. Once a
+    // task has been decided in Inbox it must not reappear in the second pass.
+    filterTasks: state.phase === 'inbox' ? state.filterTasks.filter((task) => task.id !== action.taskId) : state.filterTasks,
+  }
   const queue = next.phase === 'inbox' ? next.inboxTasks : next.filterTasks
   if (next.index < queue.length) return next
   if (next.phase === 'inbox' && next.filterTasks.length) return { ...next, phase: 'filter', index: 0 }
