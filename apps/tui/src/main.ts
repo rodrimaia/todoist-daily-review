@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 
 import { resolveCredentials } from './config'
+import type { Task } from '@doist/todoist-sdk'
+import { currentDailyReviewTask, dailyReviewSummary, type DailyReviewState } from '@todoist-review/review'
 
 export type Route = 'home' | 'daily' | 'weekly' | 'settings'
 export type KeyIntent = 'next' | 'previous' | 'select' | 'back' | 'quit' | 'none'
@@ -66,6 +68,33 @@ function screen(route: Route, layout: Layout): string {
 
 export function render(route: Route, width = process.stdout.columns): string {
   return screen(route, layoutForWidth(width))
+}
+
+export type DailyIntent = 'complete' | 'delete' | 'keep-date' | 'remove-date' | 'skip' | 'stop' | 'help'
+
+export function dailyIntent(input: string): DailyIntent | 'none' {
+  const map: Record<string, DailyIntent> = { c: 'complete', d: 'delete', k: 'keep-date', '0': 'remove-date', s: 'skip', q: 'stop', '?': 'help' }
+  return map[input] ?? 'none'
+}
+
+export function taskDetail(task: Task | undefined, position?: number, total?: number): string {
+  if (!task) return 'No task selected\n'
+  const due = task.due?.string ?? 'No date'
+  const labels = task.labels.length ? task.labels.map((label) => `@${label}`).join(' ') : 'No labels'
+  const progress = position !== undefined && total !== undefined ? `\n${position + 1}/${total}` : ''
+  return `${task.content}\n${task.description ? `${task.description}\n` : ''}Due: ${due}\nLabels: ${labels}${progress}\n`
+}
+
+export function renderDailyState(state: DailyReviewState): string {
+  if (state.phase === 'summary') {
+    const summary = dailyReviewSummary(state)
+    const lines = Object.entries(summary).map(([name, count]) => `${name}: ${count}`)
+    return `Daily Review complete\n\n${lines.length ? lines.join('\n') : 'No actions taken.'}\n\nPress q to exit.\n`
+  }
+  if (state.phase === 'error') return `Daily Review error\n${state.error ?? 'Unable to save decision.'}\nPress r to retry or q to exit.\n`
+  const task = currentDailyReviewTask(state)
+  const total = state.phase === 'inbox' ? state.inboxTasks.length : state.filterTasks.length
+  return `${state.phase === 'inbox' ? 'Inbox' : 'Filter'}\n${taskDetail(task, state.index, total)}\n[c] complete  [d] delete  [k] keep date  [0] remove date  [s] skip  [q] stop\n`
 }
 
 export function run(args: readonly string[], io: Pick<typeof process, 'stdout' | 'stderr'> = process): number {
