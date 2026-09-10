@@ -2,7 +2,8 @@
 
 import { onboardingConfig, resolveCredentials } from './config'
 import type { Task } from '@doist/todoist-sdk'
-import { TodoistAdapter, type TodoistPort } from '@todoist-review/todoist'
+import { TodoistAdapter, type TodoistPort, type TodoistProject } from '@todoist-review/todoist'
+import { renderDailyFocus, searchProjects, type DailyOverlay } from './focus-desk'
 import {
   advanceDailyReview,
   applyDailyReviewAction,
@@ -10,9 +11,9 @@ import {
   confirmDailyReviewAction,
   createDailyReviewState,
   currentDailyReviewTask,
-  dailyReviewSummary,
   failDailyReviewAction,
   loadDailyReview,
+  renameDailyReviewTask,
   retryDailyReviewAction,
   TerminalWeeklyReview,
   type DailyReviewAction,
@@ -44,6 +45,9 @@ Interactive keys:
   j, ↓            Next
   k, ↑            Previous
   enter           Select
+  m               Move Inbox task to a project
+                  Type to filter projects, ↑/↓ to select, enter to choose
+  r               Rename the current task
   esc, q          Back / quit
 `
 
@@ -101,16 +105,22 @@ export async function runInteractive(
 ): Promise<number> {
   let current = route
   let dailyState: DailyReviewState | undefined
+  let dailyProjects: TodoistProject[] = []
+  let dailyOverlay: DailyOverlay | undefined
   let weekly: TerminalWeeklyReview | undefined
   const write = (value: string) => io.stdout.write(value)
   const renderCurrent = () => {
-    if (current === 'daily' && dailyState) write(renderDailyState(dailyState))
+    if (current === 'daily' && dailyState) write(renderDailyState(dailyState, { projects: dailyProjects, overlay: dailyOverlay, width: io.stdout.columns }))
     else if (current === 'weekly' && weekly) write(`Weekly Review\n\nPhase: ${weekly.state.phase}\nInbox: ${weekly.state.inboxTasks.length}  Projects: ${weekly.state.projects.length}  Someday: ${weekly.state.somedayTasks.length}  Upcoming: ${weekly.state.upcomingTasks.length}\n\n[n] next phase  [q] back  [x] quit\n`)
     else write(render(current))
   }
   const loadCurrent = async () => {
     if (current === 'daily' && api && !dailyState) {
-      try { dailyState = createDailyReviewState(await loadDailyReview(api, filterQuery)) }
+      try {
+        const snapshot = await loadDailyReview(api, filterQuery)
+        dailyProjects = snapshot.projects
+        dailyState = createDailyReviewState(snapshot)
+      }
       catch (error) { write(`Unable to load Daily Review: ${error instanceof Error ? error.message : String(error)}\n`) }
     }
     if (current === 'weekly' && api && !weekly) {
@@ -118,10 +128,117 @@ export async function runInteractive(
       catch (error) { write(`Unable to load Weekly Review: ${error instanceof Error ? error.message : String(error)}\n`) }
     }
   }
+  const commitDailyAction = async (action: DailyReviewAction) => {
+    if (!dailyState || !api) return
+    const next = beginDailyReviewAction(dailyState, action)
+    if (next.status === 'confirming') {
+      dailyState = next
+      return
+    }
+    try {
+      await applyDailyReviewAction(api, action)
+      dailyState = action.type === 'rename'
+        ? renameDailyReviewTask(next, action.taskId, action.content)
+        : advanceDailyReview(next, action)
+      dailyOverlay = undefined
+    } catch (error) {
+      dailyState = failDailyReviewAction(next, error)
+      dailyOverlay = undefined
+    }
+  }
+  const moveToSelectedProject = async (project: TodoistProject) => {
+    if (!dailyState || !api) return
+    const task = currentDailyReviewTask(dailyState)
+    if (!task) return
+    if (task.due?.isRecurring) {
+      await commitDailyAction({
+        type: 'move_to_project',
+        taskId: task.id,
+        projectId: project.id,
+        labels: Array.from(new Set([...task.labels, 'next_action'])),
+      })
+    } else {
+      dailyOverlay = { kind: 'project-date', projectId: project.id }
+    }
+  }
+  const createAndMoveToProject = async (name: string) => {
+    if (!api || !dailyState || !name.trim()) return
+    try {
+      write(`Creating project “${name.trim()}”…\n`)
+      const project = await api.addProject({ name: name.trim() })
+      dailyProjects = [...dailyProjects, project]
+      await moveToSelectedProject(project)
+    } catch (error) {
+      write(`Unable to create project: ${error instanceof Error ? error.message : String(error)}\n`)
+    }
+  }
   io.stdout.write(render(current))
   if (io.stdin.isTTY) io.stdin.setRawMode?.(true)
   for await (const chunk of io.stdin) {
-    const input = String(chunk).trim()
+    const rawInput = String(chunk)
+    const input = rawInput.trim()
+    if (current === 'daily' && dailyState && dailyOverlay?.kind === 'project-search') {
+      const matches = searchProjects(dailyProjects, dailyOverlay.query)
+      if (rawInput.includes('\u001b[A')) {
+        dailyOverlay = { ...dailyOverlay, selectedIndex: Math.max(0, dailyOverlay.selectedIndex - 1) }
+      } else if (rawInput.includes('\u001b[B')) {
+        dailyOverlay = { ...dailyOverlay, selectedIndex: Math.min(Math.max(0, matches.length - 1), dailyOverlay.selectedIndex + 1) }
+      } else if (rawInput === '\u001b' || rawInput.includes('\u001b')) {
+        dailyOverlay = undefined
+      } else if (rawInput.includes('\r') || rawInput.includes('\n')) {
+        const selected = matches[dailyOverlay.selectedIndex]
+        if (selected) await moveToSelectedProject(selected)
+        else if (dailyOverlay.query.trim()) await createAndMoveToProject(dailyOverlay.query)
+      } else {
+        let query = dailyOverlay.query
+        for (const character of rawInput) {
+          if (character === '\u007f' || character === '\b') query = query.slice(0, -1)
+          else if (character >= ' ' && character !== '\u001b') query += character
+        }
+        const nextMatches = searchProjects(dailyProjects, query)
+        dailyOverlay = { kind: 'project-search', query, selectedIndex: Math.min(dailyOverlay.selectedIndex, Math.max(0, nextMatches.length - 1)) }
+      }
+      renderCurrent()
+      continue
+    }
+    if (current === 'daily' && dailyState && dailyOverlay?.kind === 'rename') {
+      if (rawInput === '\u001b' || rawInput.includes('\u001b')) {
+        dailyOverlay = undefined
+      } else if (rawInput.includes('\r') || rawInput.includes('\n')) {
+        const task = currentDailyReviewTask(dailyState)
+        const title = dailyOverlay.draft
+        if (!title.trim()) dailyOverlay = { ...dailyOverlay, error: 'Task title cannot be empty.' }
+        else if (!task || title === task.content) dailyOverlay = undefined
+        else await commitDailyAction({ type: 'rename', taskId: task.id, content: title })
+      } else {
+        let draft = dailyOverlay.draft
+        for (const character of rawInput) {
+          if (character === '\u007f' || character === '\b') draft = draft.slice(0, -1)
+          else if (character >= ' ' && character !== '\u001b') draft += character
+        }
+        dailyOverlay = { kind: 'rename', draft, error: undefined }
+      }
+      renderCurrent()
+      continue
+    }
+    if (current === 'daily' && dailyState && dailyOverlay?.kind === 'project-date') {
+      if (input === 'q' || input === 'Escape' || input === '\u001b') dailyOverlay = undefined
+      else {
+        const task = currentDailyReviewTask(dailyState)
+        const dueString = input === 'k' ? undefined : input === '0' ? null : ({ '1': 'today', '2': 'tomorrow', '3': 'saturday', '4': 'monday' } as Record<string, string | undefined>)[input]
+        if (task && (input === 'k' ? Boolean(task.due) : dueString !== undefined || input === '0')) {
+          await commitDailyAction({
+            type: 'move_to_project',
+            taskId: task.id,
+            projectId: dailyOverlay.projectId,
+            ...(input === 'k' ? {} : { dueString }),
+            labels: Array.from(new Set([...task.labels, 'next_action'])),
+          })
+        }
+      }
+      renderCurrent()
+      continue
+    }
     if (input === 'x' || input === 'q') {
       if (current !== 'home') { current = 'home'; io.stdout.write(render(current)); continue }
       return 0
@@ -134,7 +251,12 @@ export async function runInteractive(
       if (dailyState.phase === 'error' && input === 'r') {
         const retry = retryDailyReviewAction(dailyState)
         if (retry.pending) {
-          try { await applyDailyReviewAction(api, retry.pending); dailyState = advanceDailyReview(retry, retry.pending) }
+          try {
+            await applyDailyReviewAction(api, retry.pending)
+            dailyState = retry.pending.type === 'rename'
+              ? renameDailyReviewTask(retry, retry.pending.taskId, retry.pending.content)
+              : advanceDailyReview(retry, retry.pending)
+          }
           catch (error) { dailyState = failDailyReviewAction(retry, error) }
         } else dailyState = retry
       } else if (dailyState.status === 'confirming' && dailyState.pending) {
@@ -145,6 +267,16 @@ export async function runInteractive(
         } else if (input === 'n' || input === 'N') dailyState = confirmDailyReviewAction(dailyState, false)
       } else if (dailyState.status === 'ready') {
           const task = currentDailyReviewTask(dailyState)
+          if (input === 'r' && task) {
+            dailyOverlay = { kind: 'rename', draft: task.content }
+            renderCurrent()
+            continue
+          }
+          if (dailyState.phase === 'inbox' && input === 'm' && task) {
+            dailyOverlay = { kind: 'project-search', query: '', selectedIndex: 0 }
+            renderCurrent()
+            continue
+          }
           const intent = dailyIntent(input)
           if (task && intent !== 'none' && intent !== 'stop' && intent !== 'help') {
           if (intent === 'remove-date' && task.due?.isRecurring) {
@@ -157,9 +289,7 @@ export async function runInteractive(
               : intent === 'skip' ? { type: 'skip', taskId: task.id }
                 : intent === 'keep-date' ? { type: 'skip', taskId: task.id }
                   : { type: 'schedule', taskId: task.id, dueString: null }
-          const next = beginDailyReviewAction(dailyState, action)
-          if (next.status === 'confirming') dailyState = next
-          else { try { await applyDailyReviewAction(api, action); dailyState = advanceDailyReview(next, action) } catch (error) { dailyState = failDailyReviewAction(next, error) } }
+          await commitDailyAction(action)
         }
       }
     } else if (current === 'weekly' && weekly && input === 'n') weekly.advance()
@@ -177,16 +307,8 @@ export function taskDetail(task: Task | undefined, position?: number, total?: nu
   return `${task.content}\n${task.description ? `${task.description}\n` : ''}Project: ${task.projectId}\nDue: ${due}\nLabels: ${labels}${link}${progress}\n`
 }
 
-export function renderDailyState(state: DailyReviewState): string {
-  if (state.phase === 'summary') {
-    const summary = dailyReviewSummary(state)
-    const lines = Object.entries(summary).map(([name, count]) => `${name}: ${count}`)
-    return `Daily Review complete\n\n${lines.length ? lines.join('\n') : 'No actions taken.'}\n\nPress q to exit.\n`
-  }
-  if (state.phase === 'error') return `Daily Review error\n${state.error ?? 'Unable to save decision.'}\nPress r to retry or q to exit.\n`
-  const task = currentDailyReviewTask(state)
-  const total = state.phase === 'inbox' ? state.inboxTasks.length : state.filterTasks.length
-  return `${state.phase === 'inbox' ? 'Inbox' : 'Filter'}\n${taskDetail(task, state.index, total)}\n[c] complete  [d] delete  [k] keep date  [0] remove date  [s] skip  [q] stop\n`
+export function renderDailyState(state: DailyReviewState, options: { projects?: readonly TodoistProject[]; overlay?: DailyOverlay; width?: number } = {}): string {
+  return renderDailyFocus(state, options)
 }
 
 export function run(args: readonly string[], io: Pick<typeof process, 'stdout' | 'stderr'> = process): number {

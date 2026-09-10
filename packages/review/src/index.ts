@@ -32,7 +32,8 @@ export async function loadDailyReview(
 
 export type DailyReviewAction =
   | { type: 'complete' | 'delete' | 'skip'; taskId: string }
-  | { type: 'move_to_project' | 'move_to_someday'; taskId: string; projectId: string }
+  | { type: 'move_to_project'; taskId: string; projectId: string; dueString?: string | null; labels?: string[] }
+  | { type: 'move_to_someday'; taskId: string; projectId: string }
   | { type: 'schedule'; taskId: string; dueString: string | null }
   | { type: 'rename'; taskId: string; content: string }
 
@@ -45,6 +46,14 @@ export async function applyDailyReviewAction(api: TodoistPort, action: DailyRevi
     case 'rename': await api.updateTask(action.taskId, { content: action.content }); return
     case 'schedule': await api.updateTask(action.taskId, { dueString: action.dueString ?? 'no date' }); return
     case 'move_to_project':
+      await api.moveTask(action.taskId, { projectId: action.projectId })
+      if (action.dueString !== undefined || action.labels) {
+        await api.updateTask(action.taskId, {
+          ...(action.dueString !== undefined ? { dueString: action.dueString ?? 'no date' } : {}),
+          ...(action.labels ? { labels: action.labels } : {}),
+        })
+      }
+      return
     case 'move_to_someday': await api.moveTask(action.taskId, { projectId: action.projectId }); return
   }
 }
@@ -74,6 +83,19 @@ export function currentDailyReviewTask(state: DailyReviewState): Task | undefine
   if (state.phase === 'inbox') return state.inboxTasks[state.index]
   if (state.phase === 'filter') return state.filterTasks[state.index]
   return undefined
+}
+
+/** Updates a task title without advancing the review or recording a decision. */
+export function renameDailyReviewTask(state: DailyReviewState, taskId: string, content: string): DailyReviewState {
+  const rename = (task: Task) => task.id === taskId ? { ...task, content } : task
+  return {
+    ...state,
+    inboxTasks: state.inboxTasks.map(rename),
+    filterTasks: state.filterTasks.map(rename),
+    pending: undefined,
+    error: undefined,
+    status: 'ready',
+  }
 }
 
 export function advanceDailyReview(state: DailyReviewState, action: DailyReviewAction): DailyReviewState {

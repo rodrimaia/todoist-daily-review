@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { Task } from '@doist/todoist-sdk'
 import { InMemoryTodoistAdapter } from '@todoist-review/todoist'
-import { applyDailyReviewAction, loadDailyReview } from './index'
+import { applyDailyReviewAction, createDailyReviewState, loadDailyReview, renameDailyReviewTask } from './index'
 
 const task = (id: string, projectId = 'inbox'): Task => ({
   id, content: id, description: '', projectId, sectionId: '0', parentId: '',
@@ -26,5 +26,35 @@ describe('shared Daily Review behavior', () => {
     expect(api.tasks[0].content).toBe('renamed')
     expect(api.tasks[0].due?.string).toBeUndefined()
     expect(api.calls.map((call) => call.method)).toContain('closeTask')
+  })
+
+  test('moves an Inbox task and applies the selected project follow-up', async () => {
+    const api = new InMemoryTodoistAdapter({ tasks: [task('one')] })
+
+    await applyDailyReviewAction(api, {
+      type: 'move_to_project',
+      taskId: 'one',
+      projectId: 'work',
+      dueString: 'tomorrow',
+      labels: ['next_action'],
+    })
+
+    expect(api.tasks[0]?.projectId).toBe('work')
+    expect(api.calls).toEqual([
+      { method: 'moveTask', args: ['one', { projectId: 'work' }] },
+      { method: 'getTask', args: ['one'] },
+      { method: 'updateTask', args: ['one', { dueString: 'tomorrow', labels: ['next_action'] }] },
+      { method: 'getTask', args: ['one'] },
+    ])
+  })
+
+  test('renames the current task without advancing the review', () => {
+    const state = createDailyReviewState({ inboxTasks: [task('one')], filterTasks: [], projects: [] })
+    const renamed = renameDailyReviewTask(state, 'one', 'renamed')
+
+    expect(renamed.index).toBe(0)
+    expect(renamed.phase).toBe('inbox')
+    expect(renamed.actions).toEqual([])
+    expect(renamed.inboxTasks[0]?.content).toBe('renamed')
   })
 })
