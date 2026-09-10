@@ -29,6 +29,25 @@
         "vite": "^8.0.3",
       },
     },
+    "apps/tui": {
+      "name": "@todoist-review/tui",
+    },
+    "apps/web": {
+      "name": "@todoist-review/web",
+    },
+    "packages/review": {
+      "name": "@todoist-review/review",
+      "dependencies": {
+        "@doist/todoist-sdk": "8.0.0",
+        "@todoist-review/todoist": "workspace:*",
+      },
+    },
+    "packages/todoist": {
+      "name": "@todoist-review/todoist",
+      "dependencies": {
+        "@doist/todoist-sdk": "8.0.0",
+      },
+    },
   },
   "packages": {
     "@doist/todoist-sdk": ["@doist/todoist-sdk@8.0.0", "", { "dependencies": { "camelcase": "6.3.0", "emoji-regex": "10.6.0", "form-data": "4.0.5", "ts-custom-error": "^3.2.0", "undici": "^7.16.0", "uuid": "11.1.0", "zod": "4.3.6" }, "peerDependencies": { "type-fest": "^4.12.0" } }, "sha512-7YU9jpHCcQhrKUe+18b4a8ok8pc+ff2HoIuvkmxbQfP12dSEoYZ/pfUSHU2v/uGI9OdymLe6nVjCOZOHJRk96g=="],
@@ -310,6 +329,14 @@
     "@tanstack/router-core": ["@tanstack/router-core@1.168.9", "", { "dependencies": { "@tanstack/history": "1.161.6", "cookie-es": "^2.0.0", "seroval": "^1.4.2", "seroval-plugins": "^1.4.2" }, "bin": { "intent": "bin/intent.js" } }, "sha512-18oeEwEDyXOIuO1VBP9ACaK7tYHZUjynGDCoUh/5c/BNhia9vCJCp9O0LfhZXOorDc/PmLSgvmweFhVmIxF10g=="],
 
     "@tanstack/store": ["@tanstack/store@0.9.3", "", {}, "sha512-8reSzl/qGWGGVKhBoxXPMWzATSbZLZFWhwBAFO9NAyp0TxzfBP0mIrGb8CP8KrQTmvzXlR/vFPPUrHTLBGyFyw=="],
+
+    "@todoist-review/review": ["@todoist-review/review@workspace:packages/review"],
+
+    "@todoist-review/todoist": ["@todoist-review/todoist@workspace:packages/todoist"],
+
+    "@todoist-review/tui": ["@todoist-review/tui@workspace:apps/tui"],
+
+    "@todoist-review/web": ["@todoist-review/web@workspace:apps/web"],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
 

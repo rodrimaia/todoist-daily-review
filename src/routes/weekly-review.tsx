@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { PersonalProject, WorkspaceProject, Task } from '@doist/todoist-sdk'
 import { getAllActiveProjects, getTodoistApi } from '~/lib/todoist'
+import { prepareWeeklyReview } from '@todoist-review/review'
 import { getPreferences } from '~/lib/storage'
 import { queryKeys } from '~/lib/query-keys'
 import { canChangeTaskDueDate, canSkipTask, getReviewTrackingTaskInvalidReason, isEligibleTrackingOccurrence } from '~/lib/task-decisions'
@@ -150,49 +151,20 @@ export function WeeklyReviewPage() {
 
   useEffect(() => {
     if (!isLoading && !isReadError && !started && inboxData && allTasksData) {
-      const excludeTaskId = reviewTrackingTaskId
-
-      const inboxTasks = (inboxData.results ?? []).filter(
-        (t) => !excludeTaskId || t.id !== excludeTaskId,
-      )
-      const upcomingTasks = (upcomingData?.results ?? []).filter(
-        (t) => !excludeTaskId || t.id !== excludeTaskId,
-      )
-
-      // Group all tasks by projectId
-      const tasksByProject = new Map<string, Task[]>()
-      for (const task of allTasksData) {
-        const list = tasksByProject.get(task.projectId) ?? []
-        list.push(task)
-        tasksByProject.set(task.projectId, list)
-      }
-
-      const subprojectCountByParentId = new Map<string, number>()
-      for (const project of projects) {
-        if (!('parentId' in project) || !project.parentId) continue
-        subprojectCountByParentId.set(
-          project.parentId,
-          (subprojectCountByParentId.get(project.parentId) ?? 0) + 1,
-        )
-      }
-
-      // Build project review list from reviewable projects.
-      // Exclude the tracking task from each project's task list before
-      // calculating hasNextAction.
-      const projectsWithTasks: ProjectWithTasks[] = reviewableProjects.map((project) => {
-        const archiveTasks = tasksByProject.get(project.id) ?? []
-        const tasks = archiveTasks.filter((task) => !excludeTaskId || task.id !== excludeTaskId)
-        const hasNextAction = tasks.some((t) => t.labels.includes('next_action'))
-        const subprojectCount = subprojectCountByParentId.get(project.id) ?? 0
-        return { project, tasks, archiveTasks, hasNextAction, subprojectCount }
+      const prepared = prepareWeeklyReview({
+        inboxTasks: inboxData.results ?? [],
+        upcomingTasks: upcomingData?.results ?? [],
+        allTasks: allTasksData,
+        projects,
+      }, {
+        somedayProjectId: somedayProjectId ?? undefined,
+        excludeTaskId: reviewTrackingTaskId ?? undefined,
+        excludeProjectPrefixes: excludePrefixes,
       })
-
-      // Someday tasks from the someday project
-      const somedayTasks = somedayProjectId
-        ? (tasksByProject.get(somedayProjectId) ?? []).filter(
-            (t) => !excludeTaskId || t.id !== excludeTaskId,
-          )
-        : []
+      const inboxTasks = prepared.inboxTasks
+      const upcomingTasks = prepared.upcomingTasks
+      const projectsWithTasks: ProjectWithTasks[] = prepared.projects
+      const somedayTasks = prepared.somedayTasks
 
       dispatch({
         type: 'START',
