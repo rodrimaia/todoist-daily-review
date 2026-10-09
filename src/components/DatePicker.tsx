@@ -49,12 +49,30 @@ function nextWeekday(date: string, weekday: number): string {
   return addDays(date, ((weekday - current + 7) % 7) || 7)
 }
 
-function formatExistingDueDate(
+function resolveExistingDueDate(
   due: NonNullable<Task['due']>,
   timeZone: string,
+): { date: Date; timeZone: string; hasTime: boolean } {
+  const value = due.datetime || due.date
+  const hasTime = value.includes('T')
+  const hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)
+  // Floating times are account wall-clock values, not browser-local instants.
+  // Format them in UTC to retain those fields; explicit offsets are instants.
+  return {
+    date: new Date(hasTime ? (hasOffset ? value : `${value}Z`) : `${value}T00:00:00Z`),
+    timeZone: hasTime && hasOffset ? timeZone : 'UTC',
+    hasTime,
+  }
+}
+
+function formatExistingDueDate(
+  due: NonNullable<Task['due']>,
+  resolved: ReturnType<typeof resolveExistingDueDate>,
   timeFormat: number,
 ): string {
-  if (due.datetime) {
+  const { date, timeZone, hasTime } = resolved
+  if (!Number.isFinite(date.getTime())) return due.string || due.date
+  if (hasTime) {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone,
       weekday: 'short',
@@ -63,7 +81,7 @@ function formatExistingDueDate(
       hour: '2-digit',
       minute: '2-digit',
       hour12: timeFormat === 1,
-    }).formatToParts(new Date(due.datetime))
+    }).formatToParts(date)
     const part = (type: Intl.DateTimeFormatPartTypes) =>
       parts.find((value) => value.type === type)?.value ?? ''
     const hour = `${part('hour')}:${part('minute')}${timeFormat === 1 ? ` ${part('dayPeriod')}` : ''}`
@@ -75,7 +93,7 @@ function formatExistingDueDate(
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-  }).format(new Date(`${due.date}T00:00:00Z`))
+  }).format(date)
 }
 
 export function getInboxDateOptions(
@@ -91,13 +109,16 @@ export function getInboxDateOptions(
     { label: 'Saturday', value: nextWeekday(today, 6), decision: 'schedule', icon: CalendarRange, shortcut: '3' },
     { label: 'Monday', value: nextWeekday(today, 1), decision: 'schedule', icon: CalendarRange, shortcut: '4' },
   ]
-  const existingDate = due?.datetime ? calendarDate(new Date(due.datetime), timeZone) : due?.date
+  const resolved = due ? resolveExistingDueDate(due, timeZone) : null
+  const existingDate = resolved && Number.isFinite(resolved.date.getTime())
+    ? calendarDate(resolved.date, resolved.timeZone)
+    : null
   const seenDates = new Set(existingDate ? [existingDate] : [])
   const options: DateOption[] = []
 
-  if (due) {
+  if (due && resolved) {
     options.push({
-      label: `Keep ${formatExistingDueDate(due, timeZone, timeFormat)}`,
+      label: `Keep ${formatExistingDueDate(due, resolved, timeFormat)}`,
       value: 'keep date',
       decision: 'keep_date',
       icon: CalendarCheck,
